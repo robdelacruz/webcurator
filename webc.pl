@@ -28,18 +28,21 @@ sub datetime_from_str {
 	}
 }
 
-sub read_post_template {
-	my $template_filename = 'template.html';
+sub read_template_file {
+	my $template_filename = shift;
 	open my $hposttemplate, '<', $template_filename
 		or die "Can't open '$template_filename': $!\n";
 
 	local $/;
 	my $template_str = <$hposttemplate>;
+	close $hposttemplate;
 	return $template_str;
 }
 
-my $post_template = &read_post_template;
+my $post_template = &read_template_file('post_template.html');
+my $archives_template = &read_template_file('archive_template.html');
 my %posts;
+my @sorted_posts_keys;
 
 &main();
 
@@ -48,8 +51,14 @@ sub main {
 	&process_post_files(@ARGV);
 
 	my $output_dir = 'site';
-	print "Writing output to $output_dir...\n";
+
+	&clear_outputdir($output_dir);
+
+	print "Writing posts html to $output_dir...\n";
 	&write_post_html_files($output_dir);
+
+	print "Writing archive html page to $output_dir...\n";
+	&write_archive_html_file($output_dir);
 }
 
 # Return whether filename has WEBC signature
@@ -73,6 +82,18 @@ sub is_webc_file {
 
 	close $hpostfile;
 	return $is_webc;
+}
+
+# Return ($datetime, $title_str, $title_filename) from %posts hash key
+sub parse_postkey {
+	my $postkey = shift;
+	my ($dt_str, $title) = split(/_/, $postkey);
+
+	my $dt = datetime_from_str($dt_str);
+	my $title_filename = "$title.html";
+	$title =~ s/\+/ /g;
+
+	return ($dt, $title, $title_filename);
 }
 
 # Parse list of post text files into hash structure
@@ -101,7 +122,15 @@ sub process_post_files {
 		&process_post_file($post_filename);
 	}
 
-	print "Finishing processing files.\n";
+	@sorted_posts_keys = sort {
+		my ($dt_a) = &parse_postkey($a);
+		my ($dt_b) = &parse_postkey($b);
+
+		if (!$dt_a || !$dt_b) {
+			return 0;
+		}
+		return $dt_a <=> $dt_b;
+	} keys %posts;
 }
 
 # Parse one post text file and add entry to hash structure
@@ -159,42 +188,32 @@ sub process_post_file {
 	close $hpostfile;
 }
 
-# Return ($datetime, $title_str, $title_filename) from %posts hash key
-sub parse_postkey {
-	my $postkey = shift;
-	my ($dt_str, $title) = split(/_/, $postkey);
+sub clear_outputdir {
+	my $outdir = shift;
 
-	my $dt = datetime_from_str($dt_str);
-	my $title_filename = "$title.html";
-	$title =~ s/\+/ /g;
+	rmtree $outdir;
+	mkdir $outdir;
+}
 
-	return ($dt, $title, $title_filename);
+sub write_to_file {
+	my ($outfilename, $content) = @_;
+
+	open my $houtfile, '>', $outfilename
+		or die "Can't write '$outfilename'.";
+	print $houtfile $content;
+	close $houtfile;
 }
 
 # Given posts hash structure, output the html file list
 sub write_post_html_files {
 	my $outdir = shift;
 
-	rmtree $outdir;
-	mkdir $outdir;
-
-	my @sorted_keys = sort {
-		print "sorted_keys sort: a=$a, b=$b\n";
-		my ($dt_a, , ) = &parse_postkey($a);
-		my ($dt_b, , ) = &parse_postkey($b);
-
-		if (!$dt_a || !$dt_b) {
-			return 0;
-		}
-		return $dt_a <=> $dt_b;
-	} keys %posts;
-
 	my $prev_k;
 	my $next_k;
 
-	for my $i (0..$#sorted_keys) {
-		my $k = $sorted_keys[$i];
-		$next_k = $sorted_keys[$i+1];
+	for my $i (0..$#sorted_posts_keys) {
+		my $k = $sorted_posts_keys[$i];
+		$next_k = $sorted_posts_keys[$i+1];
 
 		my ($post_dt, $post_title, $post_title_filename) = parse_postkey($k);
 
@@ -202,10 +221,6 @@ sub write_post_html_files {
 			print "Can't parse datetime in '$post_title'. Skipping.\n";
 			next;
 		}
-
-		my $outfilename = "$outdir/$post_title_filename";
-		open my $houtfile, '>', $outfilename
-			or die "Can't write '$outfilename'.";
 
 		my $post_html = $post_template;
 		$post_html =~ s/{title}/$post_title/g;
@@ -230,12 +245,42 @@ sub write_post_html_files {
 		$post_html =~ s/{prev_post_href}/$prev_post_href/g;
 		$post_html =~ s/{next_post_href}/$next_post_href/g;
 
+		my $outfilename = "$outdir/$post_title_filename";
 		print "Writing to file '$outfilename'...\n";
-		print $houtfile $post_html;
-
-		close $houtfile;
+		&write_to_file($outfilename, $post_html);
 
 		$prev_k = $k;
 	}
 }
 
+# Given posts hash structure, output the html file list
+sub write_archive_html_file {
+	my $outdir = shift;
+
+	my $archives_html = $archives_template;
+
+	my $archive_content;
+	my $year = -1;
+	foreach my $k (@sorted_posts_keys) {
+		my ($dt, $title, $title_filename) = parse_postkey($k);
+
+		my $yearMarkup;
+		if ($year != $dt->year) {
+			$yearMarkup = "<h2>" . $dt->year . "</h2>\n";
+			$year = $dt->year;
+		} else {
+			$yearMarkup = "";
+		}
+
+		my $post_href = "<a href='$title_filename'>$title</a>\n";
+
+		$archive_content .= $yearMarkup . $post_href;
+	}
+
+	$archives_html =~ s/{archive_content}/$archive_content/g;
+
+	my $archives_filename = 'archives.html';
+	my $outfilename = "$outdir/$archives_filename";
+	print "Writing to file '$outfilename'...\n";
+	&write_to_file($outfilename, $archives_html);
+}
