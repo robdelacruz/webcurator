@@ -52,8 +52,7 @@ my $page_archives_template = &read_template_file('page_archives_template.html');
 ###
 ### Global structures
 ###
-my %articles;
-my @sorted_articles_keys;
+my %articles_by_date;
 
 &main();
 
@@ -95,20 +94,6 @@ sub is_webc_file {
 	return $is_webc;
 }
 
-# Return ($datetime, $title_str, $title_filename) from %articles hash key
-sub parse_article_key {
-	my $article_key = shift;
-
-	my $sep = '___';
-	my ($author, $dt_str, $title) = split(/$sep/, $article_key);
-
-	my $dt = datetime_from_str($dt_str);
-	my $title_filename = "$title.html";
-	$title =~ s/\+/ /g;
-
-	return ($author, $dt, $title, $title_filename);
-}
-
 # Parse list of article text files into hash structure
 sub process_article_files {
 	my @input_files = @_;
@@ -134,18 +119,20 @@ sub process_article_files {
 
 		&process_article_file($article_filename);
 	}
+}
 
-	@sorted_articles_keys = sort {
-		my ($author_a, $dt_a) = &parse_article_key($a);
-		my ($author_b, $dt_b) = &parse_article_key($b);
+sub create_article {
+	my ($title, $dt, $author, $type, $content) = @_;
 
-		my $result_dt = $dt_a <=> $dt_b;
-		if ($result_dt == 0) {
-			return $author_a <=> $author_b;
-		} else {
-			return $result_dt;
-		}
-	} keys %articles;
+	my $article_ref = {
+		title => $title,
+		dt => $dt,
+		author => $author,
+		type => $type,
+		content => $content,
+	};
+
+	return $article_ref;
 }
 
 # Parse one article text file and add entry to hash structure
@@ -180,23 +167,26 @@ sub process_article_file {
 	my $article_date = $headers{'Date'};
 	my $article_title = $headers{'Title'};
 	my $article_author = $headers{'Author'};
+	my $article_type = $headers{'Type'};
 
 	if (defined $article_date && defined $article_title && defined $article_author) {
-		$article_title =~ s/\s/+/g;
-
 		my $article_dt = datetime_from_str($article_date);
 		if ($article_dt) {
-			# Add to articles hash.
-			my $sep = '___';
-			my $article_key =
-				$article_author . $sep . $article_dt->datetime() . $sep . $article_title;
-
 			my $article_content;
 			{
 				local $/;
 				$article_content = <$harticlefile>;
 			}
-			$articles{$article_key} = $article_content;
+
+			# Add to articles hash.
+			my $article_ref = &create_article(
+				$article_title,
+				$article_dt,
+				$article_author,
+				$article_type // '',
+				$article_content
+			);
+			$articles_by_date{$article_dt->datetime()} = $article_ref;
 		} else {
 			print "Skipping $article_filename. Invalid header date: '$article_date'\n";
 		}
@@ -241,6 +231,12 @@ sub construct_article_html {
 	return $article_html;
 }
 
+sub title_to_filename {
+	my $title = shift;
+	$title =~ s/\s/\+/g;
+	return "$title.html";
+}
+
 # Given articles hash structure, output the html file list
 sub write_article_html_files {
 	my $outdir = shift;
@@ -248,39 +244,41 @@ sub write_article_html_files {
 	my $prev_k;
 	my $next_k;
 
+	my @sorted_articles_keys = sort(keys %articles_by_date);
 	for my $i (0..$#sorted_articles_keys) {
 		my $k = $sorted_articles_keys[$i];
 		$next_k = $sorted_articles_keys[$i+1];
 
-		my ($article_author, $article_dt, $article_title, $article_title_filename)
-			= parse_article_key($k);
-
-		if (!$article_dt) {
-			print "Can't parse datetime in '$article_title'. Skipping.\n";
-			next;
-		}
-
-		my $article_html =
-			&construct_article_html($article_author, $article_dt, $article_title, $articles{$k});
-
 		my $prev_article_href = '';
 		if ($prev_k) {
-			my ($author, $prev_dt, $prev_title, $prev_title_filename) = parse_article_key($prev_k);
-			$prev_article_href = "Previous: <a href='$prev_title_filename'>$prev_title</a>";
-		}
-		my $next_article_href = '';
-		if ($next_k) {
-			my ($author, $next_dt, $next_title, $next_title_filename) = parse_article_key($next_k);
-			$next_article_href = "Next: <a href='$next_title_filename'>$next_title</a>";
+			my $prev_article_ref = $articles_by_date{$prev_k};
+			my $prev_title_filename = &title_to_filename($prev_article_ref->{title});
+			$prev_article_href = "Previous: <a href='$prev_title_filename'>$prev_article_ref->{title}</a>";
 		}
 
+		my $next_article_href = '';
+		if ($next_k) {
+			my $next_article_ref = $articles_by_date{$next_k};
+			my $next_title_filename = &title_to_filename($next_article_ref->{title});
+			$next_article_href = "Next: <a href='$next_title_filename'>$next_article_ref->{title}</a>";
+		}
+
+		my $article_ref = $articles_by_date{$k};
+		my $article_html = &construct_article_html(
+			$article_ref->{author},
+			$article_ref->{dt},
+			$article_ref->{title},
+			$article_ref->{content}
+		);
+
 		my $page_article_html = $page_article_template;
-		$page_article_html =~ s/{title}/$article_title/g;
+		$page_article_html =~ s/{title}/$article_ref->{title}/g;
 		$page_article_html =~ s/{prev_article_href}/$prev_article_href/g;
 		$page_article_html =~ s/{next_article_href}/$next_article_href/g;
 		$page_article_html =~ s/{article}/$article_html/g;
 
-		my $outfilename = "$outdir/$article_title_filename";
+		my $article_filename = &title_to_filename($article_ref->{title});
+		my $outfilename = "$outdir/$article_filename";
 		print "Writing to file '$outfilename'...\n";
 		&write_to_file($outfilename, $page_article_html);
 
@@ -296,8 +294,11 @@ sub write_archives_html_file {
 
 	my $archive_content;
 	my $year = -1;
+
+	my @sorted_articles_keys = sort(keys %articles_by_date);
 	foreach my $k (@sorted_articles_keys) {
-		my ($author, $dt, $title, $title_filename) = parse_article_key($k);
+		my $article_ref = $articles_by_date{$k};
+		my $dt = $article_ref->{dt};
 
 		my $yearMarkup;
 		if ($year != $dt->year) {
@@ -307,7 +308,8 @@ sub write_archives_html_file {
 			$yearMarkup = "";
 		}
 
-		my $article_href = "<a href='$title_filename'>$title</a>\n";
+		my $title_filename = &title_to_filename($article_ref->{title});
+		my $article_href = "<a href='$title_filename'>$article_ref->{title}</a>\n";
 
 		$archive_content .= $yearMarkup . $article_href;
 	}
