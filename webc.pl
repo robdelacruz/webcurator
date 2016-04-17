@@ -48,17 +48,39 @@ sub read_template_file {
 my $page_article_template = &read_template_file('page_article_template.html');
 my $article_template = &read_template_file('article_template.html');
 my $page_archives_template = &read_template_file('page_archives_template.html');
+my $page_title_template = &read_template_file('page_title_template.html');
 
 ###
 ### Global structures
 ###
-my %articles_by_date;
+my @all_articles;
+my %articles_by_title;
+my %articles_by_author;
 
 &main();
 
 ### Start here ###
 sub main {
 	&process_article_files(@ARGV);
+
+	sub by_date {
+		$a->{dt} <=> $b->{dt} || 
+		$a->{title} cmp $b->{title};
+	}
+
+	@all_articles = sort by_date @all_articles;
+
+	foreach my $title (keys %articles_by_title) {
+		my $articles_of_title = $articles_by_title{$title};
+		my @sorted_articles = sort by_date @$articles_of_title;
+		$articles_by_title{$title} = \@sorted_articles;
+	}
+
+	foreach my $author(keys %articles_by_author) {
+		my $articles_of_author = $articles_by_author{$author};
+		my @sorted_articles = sort by_date @$articles_of_author;
+		$articles_by_author{$author} = \@sorted_articles;
+	}
 
 	my $output_dir = 'site';
 
@@ -69,6 +91,9 @@ sub main {
 
 	print "Writing archives html page to $output_dir...\n";
 	&write_archives_html_file($output_dir);
+
+	print "Writing title pages html to $output_dir...\n";
+	&write_title_html_files($output_dir);
 }
 
 # Return whether filename has WEBC signature
@@ -135,6 +160,21 @@ sub create_article {
 	return $article_ref;
 }
 
+sub submit_article {
+	my $article_ref = shift;
+
+	push(@all_articles, $article_ref);
+
+	my $title = $article_ref->{title};
+	push(@{$articles_by_title{$title}}, $article_ref);
+
+	my $author = $article_ref->{author};
+	push(@{$articles_by_author{$author}}, $article_ref);
+
+	say "Number of articles so far for title '$title': ", scalar @{$articles_by_title{$title}};
+	say "Number of articles so far for author '$author': ", scalar @{$articles_by_author{$author}};
+}
+
 # Parse one article text file and add entry to hash structure
 sub process_article_file {
 	my ($article_filename) = @_;
@@ -155,7 +195,7 @@ sub process_article_file {
 
 		last if length($line) == 0;
 
-		my ($k, $v) = split(/:\s*/, $line);
+		my ($k, $v) = split(/:\s*/, $line, 2);
 		next if length trim($k) == 0;
 		next if !defined $v;
 		next if length trim($v) == 0;
@@ -186,7 +226,8 @@ sub process_article_file {
 				$article_type // '',
 				$article_content
 			);
-			$articles_by_date{$article_dt->datetime()} = $article_ref;
+
+			&submit_article($article_ref);
 		} else {
 			print "Skipping $article_filename. Invalid header date: '$article_date'\n";
 		}
@@ -231,39 +272,36 @@ sub construct_article_html {
 	return $article_html;
 }
 
-sub title_to_filename {
+sub filename_from_title {
 	my $title = shift;
 	$title =~ s/\s/\+/g;
 	return "$title.html";
 }
 
-# Given articles hash structure, output the html file list
+# Generate html files for all articles
 sub write_article_html_files {
 	my $outdir = shift;
 
-	my $prev_k;
-	my $next_k;
+	my $article_ref;
+	my $prev_article_ref;
+	my $next_article_ref;
 
-	my @sorted_articles_keys = sort(keys %articles_by_date);
-	for my $i (0..$#sorted_articles_keys) {
-		my $k = $sorted_articles_keys[$i];
-		$next_k = $sorted_articles_keys[$i+1];
+	for my $i (0..$#all_articles) {
+		$article_ref = $all_articles[$i];
+		$next_article_ref = $all_articles[$i+1];
 
 		my $prev_article_href = '';
-		if ($prev_k) {
-			my $prev_article_ref = $articles_by_date{$prev_k};
-			my $prev_title_filename = &title_to_filename($prev_article_ref->{title});
+		if ($prev_article_ref) {
+			my $prev_title_filename = &filename_from_title($prev_article_ref->{title});
 			$prev_article_href = "Previous: <a href='$prev_title_filename'>$prev_article_ref->{title}</a>";
 		}
 
 		my $next_article_href = '';
-		if ($next_k) {
-			my $next_article_ref = $articles_by_date{$next_k};
-			my $next_title_filename = &title_to_filename($next_article_ref->{title});
+		if ($next_article_ref) {
+			my $next_title_filename = &filename_from_title($next_article_ref->{title});
 			$next_article_href = "Next: <a href='$next_title_filename'>$next_article_ref->{title}</a>";
 		}
 
-		my $article_ref = $articles_by_date{$k};
 		my $article_html = &construct_article_html(
 			$article_ref->{author},
 			$article_ref->{dt},
@@ -277,16 +315,16 @@ sub write_article_html_files {
 		$page_article_html =~ s/{next_article_href}/$next_article_href/g;
 		$page_article_html =~ s/{article}/$article_html/g;
 
-		my $article_filename = &title_to_filename($article_ref->{title});
+		my $article_filename = &filename_from_title($article_ref->{title});
 		my $outfilename = "$outdir/$article_filename";
 		print "Writing to file '$outfilename'...\n";
 		&write_to_file($outfilename, $page_article_html);
 
-		$prev_k = $k;
+		$prev_article_ref = $article_ref;
 	}
 }
 
-# Given articles hash structure, output the html file list
+# Generate archives html file containing links to all articles
 sub write_archives_html_file {
 	my $outdir = shift;
 
@@ -295,9 +333,7 @@ sub write_archives_html_file {
 	my $archive_content;
 	my $year = -1;
 
-	my @sorted_articles_keys = sort(keys %articles_by_date);
-	foreach my $k (@sorted_articles_keys) {
-		my $article_ref = $articles_by_date{$k};
+	foreach my $article_ref (@all_articles) {
 		my $dt = $article_ref->{dt};
 
 		my $yearMarkup;
@@ -308,7 +344,7 @@ sub write_archives_html_file {
 			$yearMarkup = "";
 		}
 
-		my $title_filename = &title_to_filename($article_ref->{title});
+		my $title_filename = &filename_from_title($article_ref->{title});
 		my $article_href = "<a href='$title_filename'>$article_ref->{title}</a>\n";
 
 		$archive_content .= $yearMarkup . $article_href;
@@ -321,3 +357,34 @@ sub write_archives_html_file {
 	print "Writing to file '$outfilename'...\n";
 	&write_to_file($outfilename, $page_archives_html);
 }
+
+sub write_title_html_files() {
+	my $outdir = shift;
+
+	foreach my $title (keys %articles_by_title) {
+		my $articles_html;
+
+		foreach my $article_ref (@{$articles_by_title{$title}}) {
+			my $article_html = &construct_article_html(
+				$article_ref->{author},
+				$article_ref->{dt},
+				$article_ref->{title},
+				$article_ref->{content}
+			);
+
+			$articles_html .= "\n" . $article_html;
+		}
+
+		$articles_html .= "\n";
+
+		my $page_title_html = $page_title_template;
+		$page_title_html =~ s/{title}/$title/g;
+		$page_title_html =~ s/{articles}/$articles_html/g;
+
+		my $title_filename = "title_" . filename_from_title($title);
+		my $outfilename = "$outdir/$title_filename";
+		print "Writing to file '$outfilename'...\n";
+		&write_to_file($outfilename, $page_title_html);
+	}
+}
+
