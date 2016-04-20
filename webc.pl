@@ -265,16 +265,18 @@ sub write_to_file {
 }
 
 sub construct_article_html {
-	my ($article_author, $article_dt, $article_title, $article_content) = @_;
+	my $article_ref = shift;
 
 	my $article_html = $article_template;
-	$article_html =~ s/{title}/$article_title/g;
-	$article_html =~ s/{author}/$article_author/g;
+	$article_html =~ s/{title}/$article_ref->{title}/g;
+	$article_html =~ s/{author}/$article_ref->{author}/g;
+	my $article_dt = $article_ref->{dt};
 	my $dt_formattedstr = $article_dt->year . "/" .
 						  $article_dt->month . "/" .
 						  $article_dt->day;
 	$article_html =~ s/{date}/$dt_formattedstr/g;
-	$article_html =~ s/{article_content}/$article_content/g;
+	$article_html =~ s/{type}/$article_ref->{type}/g;
+	$article_html =~ s/{article_content}/$article_ref->{content}/g;
 	return $article_html;
 }
 
@@ -308,12 +310,7 @@ sub write_article_html_files {
 			$next_article_href = "Next: <a href='$next_title_filename'>$next_article_ref->{title}</a>";
 		}
 
-		my $article_html = &construct_article_html(
-			$article_ref->{author},
-			$article_ref->{dt},
-			$article_ref->{title},
-			$article_ref->{content}
-		);
+		my $article_html = &construct_article_html($article_ref);
 
 		my $page_article_html = $page_article_template;
 		$page_article_html =~ s/{title}/$article_ref->{title}/g;
@@ -371,13 +368,7 @@ sub write_title_html_files() {
 		my $articles_html;
 
 		foreach my $article_ref (@{$articles_by_title{$title}}) {
-			my $article_html = &construct_article_html(
-				$article_ref->{author},
-				$article_ref->{dt},
-				$article_ref->{title},
-				$article_ref->{content}
-			);
-
+			my $article_html = &construct_article_html($article_ref);
 			$articles_html .= "\n" . $article_html;
 		}
 
@@ -401,13 +392,7 @@ sub write_author_html_files() {
 		my $articles_html;
 
 		foreach my $article_ref (@{$articles_by_author{$author}}) {
-			my $article_html = &construct_article_html(
-				$article_ref->{author},
-				$article_ref->{dt},
-				$article_ref->{title},
-				$article_ref->{content}
-			);
-
+			my $article_html = &construct_article_html($article_ref);
 			$articles_html .= "\n" . $article_html;
 		}
 
