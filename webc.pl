@@ -266,9 +266,12 @@ sub write_to_file {
 
 sub construct_article_html {
 	my $article_ref = shift;
-
 	my $article_html = $article_template;
+
 	$article_html =~ s/{title}/$article_ref->{title}/g;
+	my $title_link = "title_" . filename_link_from_item($article_ref->{title});
+	$article_html =~ s/{title_link}/$title_link/g;
+
 	$article_html =~ s/{author}/$article_ref->{author}/g;
 	my $article_dt = $article_ref->{dt};
 	my $dt_formattedstr = $article_dt->year . "/" .
@@ -280,10 +283,10 @@ sub construct_article_html {
 	return $article_html;
 }
 
-sub filename_from_title {
-	my $title = shift;
-	$title =~ s/\s/\+/g;
-	return "$title.html";
+sub filename_link_from_item {
+	my $item = shift;
+	$item =~ s/\s/\+/g;
+	return "$item.html";
 }
 
 # Generate html files for all articles
@@ -300,13 +303,13 @@ sub write_article_html_files {
 
 		my $prev_article_href = '';
 		if ($prev_article_ref) {
-			my $prev_title_filename = &filename_from_title($prev_article_ref->{title});
+			my $prev_title_filename = filename_link_from_item($prev_article_ref->{title});
 			$prev_article_href = "Previous: <a href='$prev_title_filename'>$prev_article_ref->{title}</a>";
 		}
 
 		my $next_article_href = '';
 		if ($next_article_ref) {
-			my $next_title_filename = &filename_from_title($next_article_ref->{title});
+			my $next_title_filename = filename_link_from_item($next_article_ref->{title});
 			$next_article_href = "Next: <a href='$next_title_filename'>$next_article_ref->{title}</a>";
 		}
 
@@ -318,7 +321,7 @@ sub write_article_html_files {
 		$page_article_html =~ s/{next_article_href}/$next_article_href/g;
 		$page_article_html =~ s/{article}/$article_html/g;
 
-		my $article_filename = &filename_from_title($article_ref->{title});
+		my $article_filename = filename_link_from_item($article_ref->{title});
 		my $outfilename = "$outdir/$article_filename";
 		print "Writing to file '$outfilename'...\n";
 		&write_to_file($outfilename, $page_article_html);
@@ -347,7 +350,7 @@ sub write_archives_html_file {
 			$yearMarkup = "";
 		}
 
-		my $title_filename = &filename_from_title($article_ref->{title});
+		my $title_filename = filename_link_from_item($article_ref->{title});
 		my $article_href = "<a href='$title_filename'>$article_ref->{title}</a>\n";
 
 		$archive_content .= $yearMarkup . $article_href;
@@ -378,7 +381,7 @@ sub write_title_html_files() {
 		$page_title_html =~ s/{title}/$title/g;
 		$page_title_html =~ s/{articles}/$articles_html/g;
 
-		my $title_filename = "title_" . filename_from_title($title);
+		my $title_filename = "title_" . filename_link_from_item($title);
 		my $outfilename = "$outdir/$title_filename";
 		print "Writing to file '$outfilename'...\n";
 		&write_to_file($outfilename, $page_title_html);
@@ -402,7 +405,7 @@ sub write_author_html_files() {
 		$page_author_html =~ s/{author}/$author/g;
 		$page_author_html =~ s/{articles}/$articles_html/g;
 
-		my $author_filename = "author_" . filename_from_title($author);
+		my $author_filename = "author_" . filename_link_from_item($author);
 		my $outfilename = "$outdir/$author_filename";
 		print "Writing to file '$outfilename'...\n";
 		&write_to_file($outfilename, $page_author_html);
