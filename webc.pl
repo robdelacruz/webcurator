@@ -7,6 +7,7 @@ use 5.012;
 use DateTime;
 use DateTime::Format::ISO8601;
 use File::Path;
+use File::Copy qw(copy);
 
 ###
 ### Helper functions
@@ -49,6 +50,7 @@ my $page_article_template = &read_template_file('page_article_template.html');
 my $article_template = &read_template_file('article_template.html');
 my $page_archives_template = &read_template_file('page_archives_template.html');
 my $page_title_template = &read_template_file('page_title_template.html');
+my $page_author_template = &read_template_file('page_author_template.html');
 
 ###
 ### Global structures
@@ -94,6 +96,11 @@ sub main {
 
 	print "Writing title pages html to $output_dir...\n";
 	&write_title_html_files($output_dir);
+
+	print "Writing author pages html to $output_dir...\n";
+	&write_author_html_files($output_dir);
+
+	copy 'style.css', "$output_dir/style.css";
 }
 
 # Return whether filename has WEBC signature
@@ -212,11 +219,14 @@ sub process_article_file {
 	if (defined $article_date && defined $article_title && defined $article_author) {
 		my $article_dt = datetime_from_str($article_date);
 		if ($article_dt) {
-			my $article_content;
-			{
-				local $/;
-				$article_content = <$harticlefile>;
-			}
+#			my $article_content;
+#			{
+#				local $/;
+#				$article_content = <$harticlefile>;
+#			}
+
+			my @article_content_lines = <$harticlefile>;
+			my $article_content = "<p>\n" . join("</p>\n<p>\n", @article_content_lines) . "</p>\n";
 
 			# Add to articles hash.
 			my $article_ref = &create_article(
@@ -258,17 +268,13 @@ sub construct_article_html {
 	my ($article_author, $article_dt, $article_title, $article_content) = @_;
 
 	my $article_html = $article_template;
-
 	$article_html =~ s/{title}/$article_title/g;
 	$article_html =~ s/{author}/$article_author/g;
-
 	my $dt_formattedstr = $article_dt->year . "/" .
 						  $article_dt->month . "/" .
 						  $article_dt->day;
 	$article_html =~ s/{date}/$dt_formattedstr/g;
-
 	$article_html =~ s/{article_content}/$article_content/g;
-
 	return $article_html;
 }
 
@@ -388,3 +394,32 @@ sub write_title_html_files() {
 	}
 }
 
+sub write_author_html_files() {
+	my $outdir = shift;
+
+	foreach my $author (keys %articles_by_author) {
+		my $articles_html;
+
+		foreach my $article_ref (@{$articles_by_author{$author}}) {
+			my $article_html = &construct_article_html(
+				$article_ref->{author},
+				$article_ref->{dt},
+				$article_ref->{title},
+				$article_ref->{content}
+			);
+
+			$articles_html .= "\n" . $article_html;
+		}
+
+		$articles_html .= "\n";
+
+		my $page_author_html = $page_author_template;
+		$page_author_html =~ s/{author}/$author/g;
+		$page_author_html =~ s/{articles}/$articles_html/g;
+
+		my $author_filename = "author_" . filename_from_title($author);
+		my $outfilename = "$outdir/$author_filename";
+		print "Writing to file '$outfilename'...\n";
+		&write_to_file($outfilename, $page_author_html);
+	}
+}
