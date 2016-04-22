@@ -8,6 +8,7 @@ use DateTime;
 use DateTime::Format::ISO8601;
 use File::Path;
 use File::Copy qw(copy);
+use Text::Markdown qw(markdown);
 
 ###
 ### Helper functions
@@ -219,14 +220,14 @@ sub process_article_file {
 	if (defined $article_date && defined $article_title && defined $article_author) {
 		my $article_dt = datetime_from_str($article_date);
 		if ($article_dt) {
-#			my $article_content;
-#			{
-#				local $/;
-#				$article_content = <$harticlefile>;
-#			}
+			my $article_content;
+			{
+				local $/;
+				$article_content = <$harticlefile>;
+			}
 
-			my @article_content_lines = <$harticlefile>;
-			my $article_content = "<p>\n" . join("</p>\n<p>\n", @article_content_lines) . "</p>\n";
+#			my @article_content_lines = <$harticlefile>;
+#			my $article_content = "<p>\n" . join("</p>\n<p>\n", @article_content_lines) . "</p>\n";
 
 			# Add to articles hash.
 			my $article_ref = &create_article(
@@ -279,7 +280,9 @@ sub construct_article_html {
 						  $article_dt->day;
 	$article_html =~ s/{date}/$dt_formattedstr/g;
 	$article_html =~ s/{type}/$article_ref->{type}/g;
-	$article_html =~ s/{article_content}/$article_ref->{content}/g;
+
+	my $content_html = markdown($article_ref->{content});
+	$article_html =~ s/{article_content}/$content_html/g;
 	return $article_html;
 }
 
