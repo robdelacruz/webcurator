@@ -132,7 +132,7 @@ sub process_article_files {
 	my @input_files = @_;
 
 	foreach my $article_filename (@input_files) {
-		print "Processing file: $article_filename... ";
+		print "==> Processing file: $article_filename... ";
 
 		if (! -e $article_filename) {
 			print "File not found.\n";
@@ -178,9 +178,6 @@ sub submit_article {
 
 	my $author = $article_ref->{author};
 	push(@{$articles_by_author{$author}}, $article_ref);
-
-	say "Number of articles so far for title '$title': ", scalar @{$articles_by_title{$title}};
-	say "Number of articles so far for author '$author': ", scalar @{$articles_by_author{$author}};
 }
 
 # Parse one article text file and add entry to hash structure
@@ -270,8 +267,12 @@ sub construct_article_html {
 	my $article_html = $article_template;
 
 	$article_html =~ s/{title}/$article_ref->{title}/g;
+
 	my $title_link = "title_" . filename_link_from_item($article_ref->{title});
 	$article_html =~ s/{title_link}/$title_link/g;
+
+	my $article_link = filename_link_from_item($article_ref->{title});
+	$article_html =~ s/{article_link}/$article_link/g;
 
 	$article_html =~ s/{author}/$article_ref->{author}/g;
 	my $article_dt = $article_ref->{dt};
@@ -326,7 +327,7 @@ sub write_article_html_files {
 
 		my $article_filename = filename_link_from_item($article_ref->{title});
 		my $outfilename = "$outdir/$article_filename";
-		print "Writing to file '$outfilename'...\n";
+		print "==> Writing to file '$outfilename'...\n";
 		&write_to_file($outfilename, $page_article_html);
 
 		$prev_article_ref = $article_ref;
@@ -363,7 +364,7 @@ sub write_archives_html_file {
 
 	my $archives_filename = 'archives.html';
 	my $outfilename = "$outdir/$archives_filename";
-	print "Writing to file '$outfilename'...\n";
+	print "==> Writing to file '$outfilename'...\n";
 	&write_to_file($outfilename, $page_archives_html);
 }
 
@@ -386,7 +387,7 @@ sub write_title_html_files() {
 
 		my $title_filename = "title_" . filename_link_from_item($title);
 		my $outfilename = "$outdir/$title_filename";
-		print "Writing to file '$outfilename'...\n";
+		print "==> Writing to file '$outfilename'...\n";
 		&write_to_file($outfilename, $page_title_html);
 	}
 }
@@ -410,7 +411,7 @@ sub write_author_html_files() {
 
 		my $author_filename = "author_" . filename_link_from_item($author);
 		my $outfilename = "$outdir/$author_filename";
-		print "Writing to file '$outfilename'...\n";
+		print "==> Writing to file '$outfilename'...\n";
 		&write_to_file($outfilename, $page_author_html);
 	}
 }

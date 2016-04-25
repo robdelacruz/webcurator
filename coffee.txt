@@ -6,7 +6,7 @@ Date: 2016-04-25
 
 Coffee is a beverage made with coffee beans.
 
-Steps in making coffee:
+###Steps in making coffee
 
 1. Grind the beans
 2. Put in coffee filter paper
@@ -16,9 +16,12 @@ Steps in making coffee:
 6. Collect the liquid that passed through the ground coffee
 7. Pour coffee liquid into cups and mugs and serve
 
-There are two main types of coffee: Arabica and Robusta. Arabica is considered to be of higher quality, yet more expensive. Often, a coffee blend is created by mixing several types of coffee bean varieties together.
+###Coffee Varieties
 
-A third type of coffee - Liberica, also known as Barako coffee, is available from the Philippines and is said to be of high quality similar to Arabica.
+There are two main types of coffee: _Arabica_ and _Robusta_. Arabica is considered to be of higher quality, yet more expensive. Often, a coffee blend is created by mixing several types of coffee bean varieties together.
 
-There are different ways of preparing coffee: through filter via a manual drip or drip machine, through french press, through a perculator, or through a high pressure espresso extractor. A new device, called the aeropress is said to be a good way to extract coffee of quality similar to an espresso machine.
+A third type of coffee - _Liberica_, also known as **Barako** coffee, is available from the Philippines and is said to be of high quality similar to Arabica.
 
+There are different ways of preparing coffee: through filter via a manual drip or drip machine, through french press, through a perculator, or through a high pressure espresso extractor. A new device, called the [aeropress](http://www.aerobie.com/product/aeropress/) is said to be a good way to extract coffee of quality similar to an espresso machine.
+
+>Coffee has a lot of health benefits too. It is full of natural antioxidants. It's good for the liver. It enhances physical and mental performance. It improves the mood. It reduces the risk of Type 2 Diabetes. It's one of those rare things that is enjoyable to consume which is also good for you.
