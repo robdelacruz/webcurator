@@ -17,7 +17,7 @@ sub trim {
 	$$str_ref =~ s/[\s\n]+$//s;
 }
 
-sub process_template {
+sub process_array_tokens {
 	my ($template_str, $data_node) = @_;
 
 	# Process an array loop template:
@@ -25,11 +25,14 @@ sub process_template {
 	# 	<li>{{$.}}</li>
 	# {{/@items}}
 	#
-	# Given a hash %data, it will read $data->{items} to read the array ref that items points to.
-	# This will recursively call process_template() for each item in the array passing the item
-	# to the template section (<li>...</li>) within the start and end tokens.
+	# Given a hash %data, it will read $data->{items} to read the array ref that
+	# items points to.
 	#
-	while ($template_str =~ /({{\@([\w\.]+?)}}(.*){{\/\@[\w\.]*?}})/s) {
+	# This will recursively call process_template() for each item in the array
+	# passing the item to the template section (<li>...</li>) within the
+	# start and end tokens.
+	#
+	while ($template_str =~ /({{@([\w\.]+?)}}(.*){{\/@\2}})/s) {
 		my $loop_section = $1;
 		my $key = $2;
 		my $inner_template = $3;
@@ -61,34 +64,114 @@ sub process_template {
 		$template_str =~ s/\Q$loop_section\E/$replacement/;
 	}
 
-	# Process a string token:
+	return $template_str;
+}
+
+sub process_line_tokens {
+	my ($template_str, $data_node) = @_;
+
+	# Process tokens that can be placed on a single line.
+	# Types of tokens that can be processed are:
+	# {{$key}}: hash key token
+	# {{$.}}: <this> scalar token
+	# {{&file.ext}}: External template file
+	#
+	# Ex 1. Process a string token:
 	# <h2>{{$item}}</h2>
 	#
-	# Given a hash %data, it will read $data->{item} to read the scalar ref that item points to.
+	# Given a hash %data, it will read $data->{item} to read the scalar ref that
+	# item points to.
 	# Then replace {{$item}} with the corresponding scalar string.
+	#
+	# Ex 2. Process an external template file token:
+	# {{&article.html}}
+	#
+	# Read the template from file 'article.html' and process and embed the template
+	# from that file.
 	#
 	my @results;
 	foreach my $template_line (split /\n/, $template_str) {
-		while ($template_line =~ /({{\$([\w\.]+?)}})/) {
+		#
+		# Capture the following:
+		# {{$key}}      to get the hash value of key
+		# {{$.}}        to get the value of current data node
+		# {{&file.ext}} to embed the 'file.ext' template
+		# {{&file.ext($key)}} to embed 'file.ext' template passing it the hash value of key
+		#
+		while ($template_line =~ /({{(\$|&)((?:\w+?|\.)|(?:[\w\.]+?))(?:\((.*)\))?}})/) {
 			my $token = $1;
-			my $key = $2;
+			my $sigil = $2;
+			my $cmd = $3;
+			my $params = $4;
 
 			logln("Matched:$template_line, token:'$token'");
 
 			my $replacement;
-			if ($key eq '.') {
-				$replacement = $data_node;
-			} else {
-				$replacement = $data_node->{$key};
-			}
-			if (!defined $replacement) {
-				$replacement = "*** undefined \$$key ***";
+
+			if ($sigil eq '$') {
+				my $key = $cmd;
+				if ($key eq '.') {
+					$replacement = $data_node;
+				} else {
+					$replacement = $data_node->{$key};
+				}
+				if (!defined $replacement) {
+					$replacement = "*** undefined $sigil$key ***";
+				}
+			} elsif ($sigil eq '&') {
+				my $data_node_for_template = $data_node;
+				if (defined $params) {
+					if ($params =~ /^(\$|@)(\w+)/) {
+						my $param_sigil = $1;
+						my $param_key = $2;
+						$data_node_for_template = $data_node->{$param_key};
+
+						# Check if template param is a valid hash key.
+						# If not, don't process the template file.
+						if (!defined $data_node_for_template) {
+							$replacement = "*** undefined $param_sigil$param_key ***";
+							$template_line =~ s/\Q$token\E/$replacement/;
+							next;
+						}
+					}
+				}
+				my $template_filename = $cmd;
+				$replacement = process_template_file($template_filename, $data_node_for_template);
 			}
 			$template_line =~ s/\Q$token\E/$replacement/;
 		}
 		push @results, $template_line;
 	}
-	return join "\n", @results;
+	return join "$/", @results;
+}
+
+sub process_template {
+	my ($template_str, $data_node) = @_;
+
+	$template_str = process_array_tokens($template_str, $data_node);
+	$template_str = process_line_tokens($template_str, $data_node);
+	return $template_str;
+}
+
+sub read_template_file {
+	my $template_filename = shift;
+	open my $htemplate, '<', $template_filename
+		or return undef;
+
+	local $/;
+	my $template_str = <$htemplate>;
+	close $htemplate;
+	return $template_str;
+}
+
+sub process_template_file {
+	my ($template_filename, $data_node) = @_;
+
+	my $template_str = read_template_file($template_filename);
+	if (!defined $template_str) {
+		return "*** $template_filename not found ***";
+	}
+	return process_template($template_str, $data_node);
 }
 
 my $template_str1 = q{
@@ -173,7 +256,7 @@ my $template_str6 = q{
 {{@articles}}
 	<article>
 		<h2>{{$title}}</h2>
-		<aside>Author: {{$author1}}</aside>
+		<aside>Author: {{$author}}</aside>
 		<p>{{$content}}</p>
 	</article>
 {{/@articles}}
@@ -208,3 +291,93 @@ say 'Hash of array of hashes: ', process_template($template_str6, $data6);
 my $data6_1 = {
 };
 say 'Hash of array of hashes with nonexisting keys: ', process_template($template_str6, $data6_1);
+
+my $data7 = {
+	month_names => [qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)],
+	month_numbers => [qw(1 2 3 4 5 6 7 8 9 10 11 12)],
+	month_reports => [
+		[qw(1 100 1000)],
+		[qw(2 200 2000)],
+		[qw(3 300 3000)],
+		[qw(4 400 4000)],
+		[qw(5 500 5000)],
+		[qw(6 600 6000)],
+		[qw(7 700 7000)],
+		[qw(8 800 8000)],
+		[qw(9 900 9000)],
+		[qw(10 1000 10000)],
+		[qw(11 1100 11000)],
+		[qw(12 1200 12000)],
+	],
+};
+my $template_str7 = q{
+	<table>
+		<thead>
+			<tr>
+{{@month_names}}
+				<td>{{$.}}</td>
+{{/@month_names}}
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+{{@month_numbers}}
+				<td>{{$.}}</td>
+{{/@month_numbers}}
+			</tr>
+			<tr>
+{{@month_reports}}
+				<td>
+{{@.}}
+					<span>{{$.}}</span>
+{{/@.}}
+				</td>
+{{/@month_reports}}
+			</tr>
+		</tbody>
+	</table>
+};
+say 'Template using multiple consecutive and nested arrays: ', process_template($template_str7, $data7);
+
+my $template_str8 = q{
+	<h1>{{$title}}</h1>
+	<aside>type: {{$type}}</aside>
+	{{&tpltest_article.html}}
+};
+my $data8 = {
+	title => 'Coffee Title',
+	type => 'drink',
+	content => "This is the content for the coffee article.\nOn multiple paragraphs.",
+};
+say 'Include template in root: ', process_template($template_str8, $data8);
+
+my $template_str6_2 = q{
+	<h1>{{$title}}</h1>
+{{@articles}}
+{{&tpltest_article2.html}}
+{{/@articles}}
+	<footer>{{$footer}}</footer>
+};
+say 'Include template in array: ', process_template($template_str6_2, $data6);
+
+my $data9 = {
+	title => 'Newspapers',
+	seattlepi => {
+		title => 'Web Curator',
+		author => 'admin',
+		date => '2016-04-27',
+		content => 'Web Curator article content goes here...',
+	},
+	footer => 'Generated by Web Curator',
+};
+my $template_str9 = q{
+	<h1>{{$title}}</h1>
+	<div>
+{{&tpltest_article2.html($seattlepi)}}
+	</div>
+	<div>
+{{&tpltest_article2.html($nytimes)}}
+	</div>
+	<footer>{{$footer}}</footer>
+};
+say 'Hash in a hash with include template: ', process_template($template_str9, $data9);
