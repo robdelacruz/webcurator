@@ -45,13 +45,19 @@ sub process_template {
 
 		logln("Loop matched: loop_section:'$loop_section', key:'$key', inner_template:'$inner_template'");
 
-		my @inner_replacement_lines;
-		foreach my $array_item (@$array_node) {
-			my $line = process_template($inner_template, $array_item);
-			logln("Output line: $line");
-			push @inner_replacement_lines, $line;
+		my $replacement;
+		if (defined $array_node && (ref $array_node eq 'ARRAY')) {
+			my @inner_replacement_lines;
+			foreach my $array_item (@$array_node) {
+				my $line = process_template($inner_template, $array_item);
+				logln("Output line: $line");
+				push @inner_replacement_lines, $line;
+			}
+			$replacement = join "$/", @inner_replacement_lines;
 		}
-		my $replacement = join "$/", @inner_replacement_lines;
+		if (!defined $replacement) {
+			$replacement = "*** undefined \$$key ***";
+		}
 		$template_str =~ s/\Q$loop_section\E/$replacement/;
 	}
 
@@ -75,9 +81,10 @@ sub process_template {
 			} else {
 				$replacement = $data_node->{$key};
 			}
-			if ($replacement) {
-				$template_line =~ s/\Q$token\E/$replacement/;
+			if (!defined $replacement) {
+				$replacement = "*** undefined \$$key ***";
 			}
+			$template_line =~ s/\Q$token\E/$replacement/;
 		}
 		push @results, $template_line;
 	}
@@ -166,7 +173,7 @@ my $template_str6 = q{
 {{@articles}}
 	<article>
 		<h2>{{$title}}</h2>
-		<aside>Author: {{$author}}</aside>
+		<aside>Author: {{$author1}}</aside>
 		<p>{{$content}}</p>
 	</article>
 {{/@articles}}
@@ -198,3 +205,6 @@ my $data6 = {
 };
 say 'Hash of array of hashes: ', process_template($template_str6, $data6);
 
+my $data6_1 = {
+};
+say 'Hash of array of hashes with nonexisting keys: ', process_template($template_str6, $data6_1);
