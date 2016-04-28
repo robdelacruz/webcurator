@@ -381,3 +381,22 @@ my $template_str9 = q{
 	<footer>{{$footer}}</footer>
 };
 say 'Hash in a hash with include template: ', process_template($template_str9, $data9);
+
+my $data10 = {
+	array_with_values => [qw(1 2 3)],
+	empty_array => [],
+};
+my $template_str10 = q{
+	<ul>
+{{@array_with_values}}
+		<li>{{$.}}</li>
+{{/@array_with_values}}
+	</ul>
+	<ul>
+{{@empty_array}}
+		<li>{{$.}}</li>
+{{/@empty_array}}
+	</ul>
+};
+say 'Empty array test: ', process_template($template_str10, $data10);
+
