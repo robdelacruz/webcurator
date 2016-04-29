@@ -10,6 +10,8 @@ use File::Path;
 use File::Copy qw(copy);
 use Text::Markdown qw(markdown);
 
+use Template;
+
 ###
 ### Helper functions
 ###
@@ -33,25 +35,14 @@ sub datetime_from_str {
 	}
 }
 
-sub read_template_file {
-	my $template_filename = shift;
-	open my $htemplate, '<', $template_filename
-		or die "Can't open '$template_filename': $!\n";
-
-	local $/;
-	my $template_str = <$htemplate>;
-	close $htemplate;
-	return $template_str;
-}
-
 ###
 ### Templates
 ###
-my $page_article_template = &read_template_file('page_article_template.html');
-my $article_template = &read_template_file('article_template.html');
-my $page_archives_template = &read_template_file('page_archives_template.html');
-my $page_title_template = &read_template_file('page_title_template.html');
-my $page_author_template = &read_template_file('page_author_template.html');
+my $page_article_template = Template::read_template_file('page_article_template.html');
+my $article_template = Template::read_template_file('article_template.html');
+my $page_archives_template = Template::read_template_file('page_archives_template.html');
+my $page_title_template = Template::read_template_file('page_title_template.html');
+my $page_author_template = Template::read_template_file('page_author_template.html');
 
 ###
 ### Global structures
