@@ -32,32 +32,44 @@ sub process_array_tokens {
 	# passing the item to the template section (<li>...</li>) within the
 	# start and end tokens.
 	#
-	while ($template_str =~ /({{@([\w\.]+?)}}(.*){{\/@\2}})/s) {
+#	while ($template_str =~ /({{@([\w\.]+?)}}(.*){{\/@\2}})/s) {
+	while ($template_str =~ /({{([@+])([\w\.]+?)}}(.*){{\/\2\3}})/s) {
 		my $loop_section = $1;
-		my $key = $2;
-		my $inner_template = $3;
+		my $sigil = $2;
+		my $key = $3;
+		my $inner_template = $4;
 
 		$inner_template =~ s/^\n//s;
 
-		my $array_node;
+		my $inner_node;
 		if ($key eq '.') {
-			$array_node = $data_node;
+			$inner_node = $data_node;
 		} else {
-			$array_node = $data_node->{$key};
+			$inner_node = $data_node->{$key};
 		}
 
 		logln("Loop matched: loop_section:'$loop_section', key:'$key', inner_template:'$inner_template'");
 
 		my $replacement;
-		if (defined $array_node && (ref $array_node eq 'ARRAY')) {
+		if ($sigil eq '@' && defined $inner_node && ref $inner_node eq ref []) {
+			#
+			# Process the inner template lines between {{@key}} and {{/@key}}
+			# Duplicate the inner template lines for each item in the array node
+			# as specified in key.
+			#
 			my @inner_replacement_lines;
-			foreach my $array_item (@$array_node) {
+			foreach my $array_item (@$inner_node) {
 				my $line = process_template($inner_template, $array_item);
 				logln("Output line: $line");
 				push @inner_replacement_lines, $line;
 			}
 			$replacement = join "$/", @inner_replacement_lines;
+		} elsif ($sigil eq '+' && defined $inner_node) {
+			# Process the inner template lines between {{+key}} and {{/+key}}
+			# Pass it the data referenced by the key.
+			$replacement = process_template($inner_template, $inner_node);
 		}
+
 		if (!defined $replacement) {
 			$replacement = "*** undefined \$$key ***";
 		}
@@ -399,4 +411,28 @@ my $template_str10 = q{
 	</ul>
 };
 say 'Empty array test: ', process_template($template_str10, $data10);
+
+my $data11 = {
+	title => 'Page Title',
+	article => {
+		title => 'Article Title',
+		author => 'rob',
+		type => 'article',
+		content => 'Article content...',
+	},
+};
+my $template_str11 = q{
+	<title>{{$title}}</title>
+{{+article}}
+	<article>
+		<h1>{{$title}}</h1>
+		<aside>{{$author}}</aside>
+		<p>{{$content}}</p>
+	{{+.}}
+		<span>{{$type}} by {{$author}}</span>
+	{{/+.}}
+	</article>
+{{/+article}}
+};
+say 'Traverse to hash key within template: ', process_template($template_str11, $data11);
 
