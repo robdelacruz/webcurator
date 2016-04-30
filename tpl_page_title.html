@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>{title}</title>
+	<title>{{$title}}</title>
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-	<h1>{title}</h1>
-	{articles}
+	<h1>{{$title}}</h1>
+{{@articles}}
+{{&tpl_article.html($.)}}
+{{/@articles}}
 </body>
 </html>
+

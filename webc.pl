@@ -35,14 +35,22 @@ sub datetime_from_str {
 	}
 }
 
+sub formatted_date {
+	my $dt = shift;
+
+	my $dt_formattedstr = $dt->year . "/" .
+						  $dt->month . "/" .
+						  $dt->day;
+	return $dt_formattedstr;
+}
+
 ###
 ### Templates
 ###
-my $page_article_template = Template::read_template_file('page_article_template.html');
-my $article_template = Template::read_template_file('article_template.html');
-my $page_archives_template = Template::read_template_file('page_archives_template.html');
-my $page_title_template = Template::read_template_file('page_title_template.html');
-my $page_author_template = Template::read_template_file('page_author_template.html');
+my $tpl_page_article = Template::read_template_file('tpl_page_article.html');
+my $tpl_page_title = Template::read_template_file('tpl_page_title.html');
+my $tpl_page_archives = Template::read_template_file('tpl_page_archives.html');
+my $tpl_page_author = Template::read_template_file('tpl_page_author.html');
 
 ###
 ### Global structures
@@ -51,11 +59,11 @@ my @all_articles;
 my %articles_by_title;
 my %articles_by_author;
 
-&main();
+main();
 
 ### Start here ###
 sub main {
-	&process_article_files(@ARGV);
+	process_article_files(@ARGV);
 
 	sub by_date {
 		$a->{dt} <=> $b->{dt} || 
@@ -78,19 +86,19 @@ sub main {
 
 	my $output_dir = 'site';
 
-	&clear_outputdir($output_dir);
+	clear_outputdir($output_dir);
 
 	print "Writing articles html to $output_dir...\n";
-	&write_article_html_files($output_dir);
+	write_article_html_files($output_dir);
 
 	print "Writing archives html page to $output_dir...\n";
-	&write_archives_html_file($output_dir);
+	write_archives_html_file($output_dir);
 
 	print "Writing title pages html to $output_dir...\n";
-	&write_title_html_files($output_dir);
+	write_title_html_files($output_dir);
 
 	print "Writing author pages html to $output_dir...\n";
-	&write_author_html_files($output_dir);
+	write_author_html_files($output_dir);
 
 	copy 'style.css', "$output_dir/style.css";
 }
@@ -134,14 +142,14 @@ sub process_article_files {
 		} elsif (! -T _) {
 			print "Invalid file.\n";
 			next;
-		} elsif (!&is_webc_file($article_filename)) {
+		} elsif (!is_webc_file($article_filename)) {
 			print "Missing WEBC n.n header line.\n";
 			next;
 		}
 
 		print "\n";
 
-		&process_article_file($article_filename);
+		process_article_file($article_filename);
 	}
 }
 
@@ -151,9 +159,14 @@ sub create_article {
 	my $article_ref = {
 		title => $title,
 		dt => $dt,
+		formatted_date => formatted_date($dt),
 		author => $author,
 		type => $type,
 		content => $content,
+		content_html => markdown($content),
+		article_link => filename_link_from_title($title),
+		title_link => 'title_' . filename_link_from_title($title),
+		author_link => 'author_' . filename_link_from_title($author),
 	};
 
 	return $article_ref;
@@ -214,19 +227,15 @@ sub process_article_file {
 				$article_content = <$harticlefile>;
 			}
 
-#			my @article_content_lines = <$harticlefile>;
-#			my $article_content = "<p>\n" . join("</p>\n<p>\n", @article_content_lines) . "</p>\n";
-
 			# Add to articles hash.
-			my $article_ref = &create_article(
+			my $article_ref = create_article(
 				$article_title,
 				$article_dt,
 				$article_author,
 				$article_type // '',
 				$article_content
 			);
-
-			&submit_article($article_ref);
+			submit_article($article_ref);
 		} else {
 			print "Skipping $article_filename. Invalid header date: '$article_date'\n";
 		}
@@ -253,32 +262,7 @@ sub write_to_file {
 	close $houtfile;
 }
 
-sub construct_article_html {
-	my $article_ref = shift;
-	my $article_html = $article_template;
-
-	$article_html =~ s/{title}/$article_ref->{title}/g;
-
-	my $title_link = "title_" . filename_link_from_item($article_ref->{title});
-	$article_html =~ s/{title_link}/$title_link/g;
-
-	my $article_link = filename_link_from_item($article_ref->{title});
-	$article_html =~ s/{article_link}/$article_link/g;
-
-	$article_html =~ s/{author}/$article_ref->{author}/g;
-	my $article_dt = $article_ref->{dt};
-	my $dt_formattedstr = $article_dt->year . "/" .
-						  $article_dt->month . "/" .
-						  $article_dt->day;
-	$article_html =~ s/{date}/$dt_formattedstr/g;
-	$article_html =~ s/{type}/$article_ref->{type}/g;
-
-	my $content_html = markdown($article_ref->{content});
-	$article_html =~ s/{article_content}/$content_html/g;
-	return $article_html;
-}
-
-sub filename_link_from_item {
+sub filename_link_from_title {
 	my $item = shift;
 	$item =~ s/\s/\+/g;
 	return "$item.html";
@@ -288,40 +272,27 @@ sub filename_link_from_item {
 sub write_article_html_files {
 	my $outdir = shift;
 
-	my $article_ref;
-	my $prev_article_ref;
-	my $next_article_ref;
+	my $article;
+	my $prev_article;
+	my $next_article;
 
 	for my $i (0..$#all_articles) {
-		$article_ref = $all_articles[$i];
-		$next_article_ref = $all_articles[$i+1];
+		$article = $all_articles[$i];
+		$next_article = $all_articles[$i+1];
 
-		my $prev_article_href = '';
-		if ($prev_article_ref) {
-			my $prev_title_filename = filename_link_from_item($prev_article_ref->{title});
-			$prev_article_href = "Previous: <a href='$prev_title_filename'>$prev_article_ref->{title}</a>";
-		}
+		my $page_data = {
+			article => $article,
+			prev_article => $prev_article,
+			next_article => $next_article,
+		};
 
-		my $next_article_href = '';
-		if ($next_article_ref) {
-			my $next_title_filename = filename_link_from_item($next_article_ref->{title});
-			$next_article_href = "Next: <a href='$next_title_filename'>$next_article_ref->{title}</a>";
-		}
-
-		my $article_html = &construct_article_html($article_ref);
-
-		my $page_article_html = $page_article_template;
-		$page_article_html =~ s/{title}/$article_ref->{title}/g;
-		$page_article_html =~ s/{prev_article_href}/$prev_article_href/g;
-		$page_article_html =~ s/{next_article_href}/$next_article_href/g;
-		$page_article_html =~ s/{article}/$article_html/g;
-
-		my $article_filename = filename_link_from_item($article_ref->{title});
+		my $page_article_html = Template::process_template($tpl_page_article, $page_data);
+		my $article_filename = filename_link_from_title($article->{title});
 		my $outfilename = "$outdir/$article_filename";
 		print "==> Writing to file '$outfilename'...\n";
-		&write_to_file($outfilename, $page_article_html);
+		write_to_file($outfilename, $page_article_html);
 
-		$prev_article_ref = $article_ref;
+		$prev_article = $article;
 	}
 }
 
@@ -329,57 +300,46 @@ sub write_article_html_files {
 sub write_archives_html_file {
 	my $outdir = shift;
 
-	my $page_archives_html = $page_archives_template;
-
-	my $archive_content;
-	my $year = -1;
-
-	foreach my $article_ref (@all_articles) {
-		my $dt = $article_ref->{dt};
-
-		my $yearMarkup;
-		if ($year != $dt->year) {
-			$yearMarkup = "<h2>" . $dt->year . "</h2>\n";
-			$year = $dt->year;
-		} else {
-			$yearMarkup = "";
-		}
-
-		my $title_filename = filename_link_from_item($article_ref->{title});
-		my $article_href = "<a href='$title_filename'>$article_ref->{title}</a>\n";
-
-		$archive_content .= $yearMarkup . $article_href;
+	my %articles_of_year;
+	foreach my $article (@all_articles) {
+		push(@{$articles_of_year{$article->{dt}->year}}, $article);
 	}
 
-	$page_archives_html =~ s/{archive_content}/$archive_content/g;
+	# Array of years
+	# [
+	#	{year: 1970, articles: [list of articles in 1970]},
+	#	{year: 1971, articles: [list of articles in 1971]},
+	#	...
+	# ]
+	my @page_data;
+	foreach my $year (sort keys %articles_of_year) {
+		push(@page_data, {
+			year => $year,
+			articles => $articles_of_year{$year},
+		});
+	}
 
+	my $page_archives_html = Template::process_template($tpl_page_archives, \@page_data);
 	my $archives_filename = 'archives.html';
 	my $outfilename = "$outdir/$archives_filename";
 	print "==> Writing to file '$outfilename'...\n";
-	&write_to_file($outfilename, $page_archives_html);
+	write_to_file($outfilename, $page_archives_html);
 }
 
 sub write_title_html_files() {
 	my $outdir = shift;
 
 	foreach my $title (keys %articles_by_title) {
-		my $articles_html;
+		my $page_data = {
+			title => $title,
+			articles => $articles_by_title{$title},
+		};
 
-		foreach my $article_ref (@{$articles_by_title{$title}}) {
-			my $article_html = &construct_article_html($article_ref);
-			$articles_html .= "\n" . $article_html;
-		}
-
-		$articles_html .= "\n";
-
-		my $page_title_html = $page_title_template;
-		$page_title_html =~ s/{title}/$title/g;
-		$page_title_html =~ s/{articles}/$articles_html/g;
-
-		my $title_filename = "title_" . filename_link_from_item($title);
+		my $page_title_html = Template::process_template($tpl_page_title, $page_data);
+		my $title_filename = "title_" . filename_link_from_title($title);
 		my $outfilename = "$outdir/$title_filename";
 		print "==> Writing to file '$outfilename'...\n";
-		&write_to_file($outfilename, $page_title_html);
+		write_to_file($outfilename, $page_title_html);
 	}
 }
 
@@ -387,22 +347,15 @@ sub write_author_html_files() {
 	my $outdir = shift;
 
 	foreach my $author (keys %articles_by_author) {
-		my $articles_html;
+		my $page_data = {
+			author => $author,
+			articles => $articles_by_author{$author},
+		};
 
-		foreach my $article_ref (@{$articles_by_author{$author}}) {
-			my $article_html = &construct_article_html($article_ref);
-			$articles_html .= "\n" . $article_html;
-		}
-
-		$articles_html .= "\n";
-
-		my $page_author_html = $page_author_template;
-		$page_author_html =~ s/{author}/$author/g;
-		$page_author_html =~ s/{articles}/$articles_html/g;
-
-		my $author_filename = "author_" . filename_link_from_item($author);
+		my $page_author_html = Template::process_template($tpl_page_author, $page_data);
+		my $author_filename = "author_" . filename_link_from_title($author);
 		my $outfilename = "$outdir/$author_filename";
 		print "==> Writing to file '$outfilename'...\n";
-		&write_to_file($outfilename, $page_author_html);
+		write_to_file($outfilename, $page_author_html);
 	}
 }

@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 	<title>Archives</title>
@@ -5,6 +6,12 @@
 </head>
 <body>
 	<h1>Archives</h1>
-	{archive_content}
+{{@.}}
+	<h2>{{$year}}</h2>
+{{@articles}}
+	<a href='{{$article_link}}'>{{$title}}</a>
+{{/@articles}}
+{{/@.}}
 </body>
 </html>
+

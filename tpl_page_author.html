@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>{{$author}}'s articles</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+	<header>
+		<h1>{{$author}}'s articles</h1>
+	</header>
+{{@articles}}
+{{&tpl_article.html($.)}}
+{{/@articles}}
+</body>
+</html>
+

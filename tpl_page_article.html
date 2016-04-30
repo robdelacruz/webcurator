@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+{{+article}}
+	<title>{{$title}}</title>
+{{/+article}}
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+{{&tpl_article.html($article)}}
+<div>
+{{+prev_article}}
+	Previous: <a href='{{$article_link}}'>{{$title}}</a>
+{{/+prev_article}}
+
+{{+next_article}}
+	Next: <a href='{{$article_link}}'>{{$title}}</a>
+{{/+next_article}}
+</div>
+
+</body>
+</html>
+
