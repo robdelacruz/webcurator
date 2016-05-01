@@ -46,7 +46,7 @@ sub process_inner_template_tokens {
 	# Then it will call process_template() passing it the new data node and inner
 	# template section.
 	#
-	while ($template_str =~ /({{([@+])([\w\.]+?)}}(.*){{\/\2\3}})/s) {
+	while ($template_str =~ /(\{\{([@+])([\w\.]+?)}}(.*)\{\{\/\2\3}})/s) {
 		my $loop_section = $1;			# the whole section including the start/end tokens
 		my $sigil = $2;					# either @ or +
 		my $key = $3;					# hash key or .
@@ -123,7 +123,7 @@ sub process_line_tokens {
 		# {{&file.ext}} to embed the 'file.ext' template
 		# {{&file.ext($key)}} to embed 'file.ext' template passing it the hash value of key
 		#
-		while ($template_line =~ /({{(\$|&)((?:\w+?|\.)|(?:[\w\.]+?))(?:\((.*)\))?}})/) {
+		while ($template_line =~ /(\{\{(\$|&)((?:\w+?|\.)|(?:[\w\.]+?))(?:\((.*)\))?}})/) {
 			my $token = $1;
 			my $sigil = $2;
 			my $cmd = $3;
