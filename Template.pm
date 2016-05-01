@@ -77,10 +77,15 @@ sub process_inner_template_tokens {
 				push @inner_replacement_lines, $line;
 			}
 			$replacement = join "$/", @inner_replacement_lines;
-		} elsif ($sigil eq '+' && defined $inner_node) {
-			# Process the inner template lines between {{+key}} and {{/+key}}
-			# Pass it the data referenced by the key.
-			$replacement = process_template($inner_template, $inner_node);
+		} elsif ($sigil eq '+') {
+			if (defined $inner_node) {
+				# Process the inner template lines between {{+key}} and {{/+key}}
+				# Pass it the data referenced by the key.
+				$replacement = process_template($inner_template, $inner_node);
+			} else {
+				# No value in hash key so erase the entire template section.
+				$replacement = '';
+			}
 		}
 
 		if (!defined $replacement) {
