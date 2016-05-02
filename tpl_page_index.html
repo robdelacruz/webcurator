@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Web Curator Start Page</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+	<h1>Web Curator Start Page</h1>
+	<h2>Authors</h2>
+	<ul>
+{{@authors}}
+	<li><a href='{{$author_link}}'>{{$author}}</a></li>
+{{/@authors}}
+	</ul>
+	<h2>Recent articles</h2>
+	<ul>
+{{@recent_articles}}
+	<li><a href='{{$article_link}}'>{{$title}}</a></li>
+{{/@recent_articles}}
+	</ul>
+

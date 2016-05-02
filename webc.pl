@@ -45,14 +45,6 @@ sub formatted_date {
 }
 
 ###
-### Templates
-###
-my $tpl_page_article = Template::read_template_file('tpl_page_article.html');
-my $tpl_page_title = Template::read_template_file('tpl_page_title.html');
-my $tpl_page_archives = Template::read_template_file('tpl_page_archives.html');
-my $tpl_page_author = Template::read_template_file('tpl_page_author.html');
-
-###
 ### Global structures
 ###
 my @all_articles;
@@ -99,6 +91,9 @@ sub main {
 
 	print "Writing author pages html to $output_dir...\n";
 	write_author_html_files($output_dir);
+
+	print "Writing index pages to $output_dir...\n";
+	write_index_html_files($output_dir);
 
 	copy 'style.css', "$output_dir/style.css";
 }
@@ -286,7 +281,7 @@ sub write_article_html_files {
 			next_article => $next_article,
 		};
 
-		my $page_article_html = Template::process_template($tpl_page_article, $page_data);
+		my $page_article_html = Template::process_template_file('tpl_page_article.html', $page_data);
 		my $article_filename = filename_link_from_title($article->{title});
 		my $outfilename = "$outdir/$article_filename";
 		print "==> Writing to file '$outfilename'...\n";
@@ -319,7 +314,7 @@ sub write_archives_html_file {
 		});
 	}
 
-	my $page_archives_html = Template::process_template($tpl_page_archives, \@page_data);
+	my $page_archives_html = Template::process_template_file('tpl_page_archives.html', \@page_data);
 	my $archives_filename = 'archives.html';
 	my $outfilename = "$outdir/$archives_filename";
 	print "==> Writing to file '$outfilename'...\n";
@@ -335,7 +330,7 @@ sub write_title_html_files() {
 			articles => $articles_by_title{$title},
 		};
 
-		my $page_title_html = Template::process_template($tpl_page_title, $page_data);
+		my $page_title_html = Template::process_template_file('tpl_page_title.html', $page_data);
 		my $title_filename = "title_" . filename_link_from_title($title);
 		my $outfilename = "$outdir/$title_filename";
 		print "==> Writing to file '$outfilename'...\n";
@@ -352,10 +347,25 @@ sub write_author_html_files() {
 			articles => $articles_by_author{$author},
 		};
 
-		my $page_author_html = Template::process_template($tpl_page_author, $page_data);
+		my $page_author_html = Template::process_template_file('tpl_page_author.html', $page_data);
 		my $author_filename = "author_" . filename_link_from_title($author);
 		my $outfilename = "$outdir/$author_filename";
 		print "==> Writing to file '$outfilename'...\n";
 		write_to_file($outfilename, $page_author_html);
 	}
 }
+
+# Generate archives html file containing links to all articles
+sub write_index_html_files {
+	my $outdir = shift;
+
+	my $page_data = {
+	};
+
+	my $page_index_html = Template::process_template_file('tpl_page_index.html', $page_data);
+	my $outfilename = "$outdir/index.html";
+	print "==> Writing to file '$outfilename'...\n";
+	write_to_file($outfilename, $page_index_html);
+}
+
+
