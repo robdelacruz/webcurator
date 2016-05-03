@@ -70,7 +70,7 @@ sub main {
 		$articles_by_title{$title} = \@sorted_articles;
 	}
 
-	foreach my $author(keys %articles_by_author) {
+	foreach my $author (keys %articles_by_author) {
 		my $articles_of_author = $articles_by_author{$author};
 		my @sorted_articles = sort by_date @$articles_of_author;
 		$articles_by_author{$author} = \@sorted_articles;
@@ -359,10 +359,28 @@ sub write_author_html_files() {
 sub write_index_html_files {
 	my $outdir = shift;
 
-	my $page_data = {
-	};
+	my $max_recent_articles = 5;
 
-	my $page_index_html = Template::process_template_file('tpl_page_index.html', $page_data);
+	my %page_data;
+	foreach my $author (keys %articles_by_author) {
+		my $author_link = {
+			author => $author,
+			author_link => "author_" . filename_link_from_title($author),
+		};
+		push @{$page_data{authors}}, $author_link;
+	}
+
+	foreach my $article (reverse @all_articles) {
+		my $article_link = {
+			title => $article->{title},
+			article_link => filename_link_from_title($article->{title}),
+		};
+		push @{$page_data{recent_articles}}, $article_link;
+		
+		last if (--$max_recent_articles == 0);
+	}
+
+	my $page_index_html = Template::process_template_file('tpl_page_index.html', \%page_data);
 	my $outfilename = "$outdir/index.html";
 	print "==> Writing to file '$outfilename'...\n";
 	write_to_file($outfilename, $page_index_html);
