@@ -8,16 +8,7 @@
 </head>
 <body>
 {{&tpl_article_card.html($article)}}
-<div>
-{{+prev_article}}
-	Previous: <a href='{{$article_link}}'>{{$title}}</a>
-{{/+prev_article}}
-
-{{+next_article}}
-	Next: <a href='{{$article_link}}'>{{$title}}</a>
-{{/+next_article}}
-</div>
-
+{{&tpl_prev_next_article_card.html}}
 </body>
 </html>
 
