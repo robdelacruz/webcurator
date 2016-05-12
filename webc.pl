@@ -362,7 +362,7 @@ sub write_index_html_files {
 	my $max_recent_articles = 5;
 
 	my %page_data;
-	foreach my $author (keys %articles_by_author) {
+	foreach my $author (sort keys %articles_by_author) {
 		my $author_link = {
 			author => $author,
 			author_link => "author_" . filename_link_from_title($author),
@@ -371,11 +371,7 @@ sub write_index_html_files {
 	}
 
 	foreach my $article (reverse @all_articles) {
-		my $article_link = {
-			title => $article->{title},
-			article_link => filename_link_from_title($article->{title}),
-		};
-		push @{$page_data{recent_articles}}, $article_link;
+		push @{$page_data{recent_articles}}, $article;
 		
 		last if (--$max_recent_articles == 0);
 	}

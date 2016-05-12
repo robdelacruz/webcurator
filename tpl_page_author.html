@@ -8,9 +8,7 @@
 	<header>
 		<h1>{{$author}}'s articles</h1>
 	</header>
-{{@articles}}
-{{&tpl_article.html($.)}}
-{{/@articles}}
+{{&tpl_article_links_card.html($articles)}}
 </body>
 </html>
 

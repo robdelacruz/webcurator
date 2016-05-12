@@ -13,9 +13,5 @@
 {{/@authors}}
 	</ul>
 	<h2>Recent articles</h2>
-	<ul>
-{{@recent_articles}}
-	<li><a href='{{$article_link}}'>{{$title}}</a></li>
-{{/@recent_articles}}
-	</ul>
+	{{&tpl_article_links_card.html($recent_articles)}}
 

@@ -58,7 +58,11 @@ sub process_inner_template_tokens {
 		if ($key eq '.') {
 			$inner_node = $data_node;
 		} else {
-			$inner_node = $data_node->{$key};
+			if (ref $data_node eq ref {}) {
+				$inner_node = $data_node->{$key};
+			} else {
+				$inner_node = undef;
+			}
 		}
 
 		logln("Loop matched: loop_section:'$loop_section', key:'$key', inner_template:'$inner_template'");
@@ -154,6 +158,12 @@ sub process_line_tokens {
 					if ($params =~ /^(\$|@)(\w+)/) {
 						my $param_sigil = $1;
 						my $param_key = $2;
+
+						if (ref $data_node ne ref {}) {
+							$replacement = "*** not a hash $param_sigil$param_key ***";
+							$template_line =~ s/\Q$token\E/$replacement/;
+							next;
+						}
 						$data_node_for_template = $data_node->{$param_key};
 
 						# Check if template param is a valid hash key.
@@ -178,8 +188,10 @@ sub process_line_tokens {
 sub process_template {
 	my ($template_str, $data_node) = @_;
 
-	$template_str = process_inner_template_tokens($template_str, $data_node);
-	$template_str = process_line_tokens($template_str, $data_node);
+	if (defined $data_node) {
+		$template_str = process_inner_template_tokens($template_str, $data_node);
+		$template_str = process_line_tokens($template_str, $data_node);
+	}
 	return $template_str;
 }
 

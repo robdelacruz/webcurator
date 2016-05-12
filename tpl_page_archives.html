@@ -8,9 +8,7 @@
 	<h1>Archives</h1>
 {{@.}}
 	<h2>{{$year}}</h2>
-{{@articles}}
-	<a href='{{$article_link}}'>{{$title}}</a>
-{{/@articles}}
+	{{&tpl_article_links_card.html($articles)}}
 {{/@.}}
 </body>
 </html>
