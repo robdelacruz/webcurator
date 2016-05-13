@@ -1,47 +1,57 @@
-<style>
-	p { 
-		margin: 0;
-		padding: 0.2em 0;
-		font-size: 1em;
-	} 
-	article {
-		margin: 0.4em;
-		padding: 1em 1em;
-		border: solid 1px;
-		background-color: lightgray;
-		width: 60%;
-	}
-	header {
-		margin: 0;
-		padding: 0;
-	}
-	h1 {
-		margin: 0;
-		padding: 0;
-		font-size: 1.5em;
-		font-weight: normal;
-		font-style: normal;
-		text-decoration: normal;
-	}
-	h2 {
-		margin: 0;
-		padding: 0;
-		font-size: 1.5em;
-		font-weight: normal;
-		font-style: normal;
-		text-decoration: underline;
-	} 
-	header aside {
-		margin: 0 0 0.2em;
-		padding: 0;
-		font-style: italic;
-		display: inline;
-	}
-	header address {
-		margin: 0 0 0.4em;
-		padding: 0;
-		font-style: normal;
-		display: inline;
-	}
-</style>
+#content {
+	margin: 0 auto;
+	min-width: 768px;
+	max-width: 840px;
+}
+.main-col {
+	width: 71%;
+	float: left;
+}
+.sub-col {
+	width: 26%;
+	float: right;
+}
+p { 
+	margin: 0;
+	padding: 0.2em 0;
+	font-size: 1em;
+} 
+article {
+	margin: 0.4em;
+	padding: 1em 1em;
+	border: solid 1px;
+	background-color: lightgray;
+}
+header {
+	margin: 0;
+	padding: 0;
+}
+h1 {
+	margin: 0;
+	padding: 0;
+	font-size: 1.5em;
+	font-weight: normal;
+	font-style: normal;
+	text-decoration: normal;
+}
+h2 {
+	margin: 0;
+	padding: 0;
+	font-size: 1.5em;
+	font-weight: normal;
+	font-style: normal;
+	text-decoration: underline;
+} 
+header aside {
+	margin: 0 0 0.2em;
+	padding: 0;
+	font-style: italic;
+	display: inline;
+}
+header address {
+	margin: 0 0 0.4em;
+	padding: 0;
+	font-style: normal;
+	display: inline;
+}
 

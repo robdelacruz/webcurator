@@ -5,8 +5,15 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-	<h1>{{$title}}</h1>
-{{&tpl_articles_card.html($articles)}}
+	<div id="content">
+		<h1>{{$title}}</h1>
+		<div class="main-col">
+		{{&tpl_articles_card.html($articles)}}
+		</div>
+	</div>
+	<div class="sub-col">
+		<h3>Other links go here</h3>
+	</div>
 </body>
 </html>
 

@@ -7,8 +7,15 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-{{&tpl_article_card.html($article)}}
-{{&tpl_prev_next_article_card.html}}
+<div id="content">
+	<div class="main-col">
+		{{&tpl_article_card.html($article)}}
+		{{&tpl_prev_next_article_card.html}}
+	</div>
+	<div class="sub-col">
+		<h3>Other links go here</h3>
+	</div>
+</div>
 </body>
 </html>
 
