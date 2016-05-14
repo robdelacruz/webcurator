@@ -146,7 +146,7 @@ sub process_line_tokens {
 				my $key = $cmd;
 				if ($key eq '.') {
 					$replacement = $data_node;
-				} else {
+				} elsif (ref $data_node eq ref {}) {
 					$replacement = $data_node->{$key};
 				}
 				if (!defined $replacement) {

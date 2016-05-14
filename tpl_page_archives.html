@@ -5,11 +5,17 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-	<h1>Archives</h1>
-{{@.}}
-	<h2>{{$year}}</h2>
-	{{&tpl_article_links_card.html($articles)}}
-{{/@.}}
+<section id="content">
+	<section class="main-col">
+		<h1>Archives</h1>
+	{{@.}}
+		{{&tpl_article_links_card.html}}
+	{{/@.}}
+	</section>
+	<section class="sub-col">
+		<h3>Other links go here</h3>
+	</section>
+</section>
 </body>
 </html>
 

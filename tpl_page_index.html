@@ -5,13 +5,17 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-	<h1>Web Curator Start Page</h1>
-	<h2>Authors</h2>
-	<ul>
-{{@authors}}
-	<li><a href='{{$author_link}}'>{{$author}}</a></li>
-{{/@authors}}
-	</ul>
-	<h2>Recent articles</h2>
-	{{&tpl_article_links_card.html($recent_articles)}}
+<section id="content">
+	<section class="main-col">
+		<h1>Web Curator Start Page</h1>
+		{{&tpl_author_links_card.html($author_links_card)}}
+		{{&tpl_article_links_card.html($recent_articles_card)}}
+	</section>
+	<section class="sub-col">
+		<h3>Other links go here</h3>
+	</section>
+</section>
+</body>
+</html>
+
 

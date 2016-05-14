@@ -5,10 +5,15 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-	<header>
+<section id="content">
+	<section class="main-col">
 		<h1>{{$author}}'s articles</h1>
-	</header>
-{{&tpl_article_links_card.html($articles)}}
+		{{&tpl_article_links_card.html($articles_links_data)}}
+	</section>
+	<section class="sub-col">
+		<h3>Other links go here</h3>
+	</section>
+</section>
 </body>
 </html>
 

@@ -1,5 +1,13 @@
-<ul class="article-links-card">
-	{{@.}}
-	<li><a href="{{$article_link}}">{{$title}}</a></li>
-	{{/@.}}
-</ul>
+<section class="article-links-card">
+{{+heading}}
+	<h2>{{$.}}</h2>
+{{/+heading}}
+{{+articles}}
+	<ul>
+		{{@.}}
+		<li><a href="{{$article_link}}">{{$title}}</a></li>
+		{{/@.}}
+	</ul>
+{{/+articles}}
+</section>
+

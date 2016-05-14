@@ -308,10 +308,11 @@ sub write_archives_html_file {
 	# ]
 	my @page_data;
 	foreach my $year (sort keys %articles_of_year) {
-		push(@page_data, {
-			year => $year,
+		my $article_links_data = {
+			heading => $year,
 			articles => $articles_of_year{$year},
-		});
+		};
+		push @page_data, $article_links_data;
 	}
 
 	my $page_archives_html = Template::process_template_file('tpl_page_archives.html', \@page_data);
@@ -344,7 +345,9 @@ sub write_author_html_files() {
 	foreach my $author (keys %articles_by_author) {
 		my $page_data = {
 			author => $author,
-			articles => $articles_by_author{$author},
+			articles_links_data => {
+				articles => $articles_by_author{$author},
+			},
 		};
 
 		my $page_author_html = Template::process_template_file('tpl_page_author.html', $page_data);
@@ -362,19 +365,28 @@ sub write_index_html_files {
 	my $max_recent_articles = 5;
 
 	my %page_data;
+	my @author_links;
 	foreach my $author (sort keys %articles_by_author) {
 		my $author_link = {
 			author => $author,
 			author_link => "author_" . filename_link_from_title($author),
 		};
-		push @{$page_data{authors}}, $author_link;
+		push @author_links, $author_link;
 	}
+	$page_data{author_links_card} = {
+		heading => 'Authors',
+		authors => \@author_links,
+	};
 
+	my @recent_articles;
 	foreach my $article (reverse @all_articles) {
-		push @{$page_data{recent_articles}}, $article;
-		
+		push @recent_articles, $article;
 		last if (--$max_recent_articles == 0);
 	}
+	$page_data{recent_articles_card} = {
+		heading => 'Recent Articles',
+		articles => \@recent_articles,
+	};
 
 	my $page_index_html = Template::process_template_file('tpl_page_index.html', \%page_data);
 	my $outfilename = "$outdir/index.html";

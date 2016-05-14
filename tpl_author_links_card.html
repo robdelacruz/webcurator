@@ -1,5 +1,12 @@
-<ul class="author-links-card">
-	{{@.}}
-	<li><a href="{{$author_link}}">{{$author}}</a></li>
-	{{/@.}}
-</ul>
+<section class="author-links-card">
+{{+heading}}
+	<h2>{{$.}}</h2>
+{{/+heading}}
+{{+authors}}
+	<ul>
+		{{@.}}
+		<li><a href="{{$author_link}}">{{$author}}</a></li>
+		{{/@.}}
+	</ul>
+{{/+authors}}
+</section>
