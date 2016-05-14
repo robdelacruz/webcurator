@@ -358,13 +358,7 @@ sub write_author_html_files() {
 	}
 }
 
-# Generate archives html file containing links to all articles
-sub write_index_html_files {
-	my $outdir = shift;
-
-	my $max_recent_articles = 5;
-
-	my %page_data;
+sub create_author_links_card_data {
 	my @author_links;
 	foreach my $author (sort keys %articles_by_author) {
 		my $author_link = {
@@ -373,20 +367,32 @@ sub write_index_html_files {
 		};
 		push @author_links, $author_link;
 	}
-	$page_data{author_links_card} = {
+	return {
 		heading => 'Authors',
 		authors => \@author_links,
 	};
+}
 
+sub create_recent_articles_card_data {
+	my $max_recent_articles = 5;
 	my @recent_articles;
 	foreach my $article (reverse @all_articles) {
 		push @recent_articles, $article;
 		last if (--$max_recent_articles == 0);
 	}
-	$page_data{recent_articles_card} = {
+	return {
 		heading => 'Recent Articles',
 		articles => \@recent_articles,
 	};
+}
+
+# Generate archives html file containing links to all articles
+sub write_index_html_files {
+	my $outdir = shift;
+
+	my %page_data;
+	$page_data{author_links_card} = create_author_links_card_data();
+	$page_data{recent_articles_card} = create_recent_articles_card_data();
 
 	my $page_index_html = Template::process_template_file('tpl_page_index.html', \%page_data);
 	my $outfilename = "$outdir/index.html";
