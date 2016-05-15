@@ -10,6 +10,11 @@ use File::Path;
 use File::Copy qw(copy);
 use Text::Markdown qw(markdown);
 
+use File::Basename;
+use File::Spec;
+
+my $script_path = dirname(File::Spec->rel2abs($0));
+use lib dirname(File::Spec->rel2abs($0));
 use Template;
 
 ###
@@ -95,7 +100,7 @@ sub main {
 	print "Writing index pages to $output_dir...\n";
 	write_index_html_files($output_dir);
 
-	copy 'style.css', "$output_dir/style.css";
+	copy(File::Spec->catpath('', $script_path, 'style.css'), "$output_dir/style.css");
 }
 
 # Return whether filename has WEBC signature
