@@ -200,8 +200,6 @@ sub process_template {
 
 sub read_template_file {
 	my $template_filename = shift;
-	my $script_path = dirname(File::Spec->rel2abs($0));
-	$template_filename = File::Spec->catpath('', $script_path, $template_filename);
 	open my $htemplate, '<', $template_filename
 		or return undef;
 

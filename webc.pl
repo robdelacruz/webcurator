@@ -13,8 +13,12 @@ use Text::Markdown qw(markdown);
 use File::Basename;
 use File::Spec;
 
-my $script_path = dirname(File::Spec->rel2abs($0));
-use lib dirname(File::Spec->rel2abs($0));
+BEGIN {
+	sub script_dirname {
+		return dirname(File::Spec->rel2abs($0));
+	}
+	use lib script_dirname();
+}
 use Template;
 
 ###
@@ -100,7 +104,7 @@ sub main {
 	print "Writing index pages to $output_dir...\n";
 	write_index_html_files($output_dir);
 
-	copy(File::Spec->catpath('', $script_path, 'style.css'), "$output_dir/style.css");
+	copy(File::Spec->catpath('', script_dirname(), 'style.css'), "$output_dir/style.css");
 }
 
 # Return whether filename has WEBC signature
@@ -268,6 +272,13 @@ sub filename_link_from_title {
 	return "$item.html";
 }
 
+sub process_stock_template_file {
+	my ($template_filename, $page_data) = @_;
+
+	my $template_filepath = File::Spec->catpath('', script_dirname(), $template_filename);
+	return Template::process_template_file($template_filepath, $page_data);
+}
+
 # Generate html files for all articles
 sub write_article_html_files {
 	my $outdir = shift;
@@ -286,7 +297,7 @@ sub write_article_html_files {
 			next_article => $next_article,
 		};
 
-		my $page_article_html = Template::process_template_file('tpl_page_article.html', $page_data);
+		my $page_article_html = process_stock_template_file('tpl_page_article.html', $page_data);
 		my $article_filename = filename_link_from_title($article->{title});
 		my $outfilename = "$outdir/$article_filename";
 		print "==> Writing to file '$outfilename'...\n";
@@ -320,7 +331,7 @@ sub write_archives_html_file {
 		push @page_data, $article_links_data;
 	}
 
-	my $page_archives_html = Template::process_template_file('tpl_page_archives.html', \@page_data);
+	my $page_archives_html = process_stock_template_file('tpl_page_archives.html', \@page_data);
 	my $archives_filename = 'archives.html';
 	my $outfilename = "$outdir/$archives_filename";
 	print "==> Writing to file '$outfilename'...\n";
@@ -336,7 +347,7 @@ sub write_title_html_files() {
 			articles => $articles_by_title{$title},
 		};
 
-		my $page_title_html = Template::process_template_file('tpl_page_title.html', $page_data);
+		my $page_title_html = process_stock_template_file('tpl_page_title.html', $page_data);
 		my $title_filename = "title_" . filename_link_from_title($title);
 		my $outfilename = "$outdir/$title_filename";
 		print "==> Writing to file '$outfilename'...\n";
@@ -355,7 +366,7 @@ sub write_author_html_files() {
 			},
 		};
 
-		my $page_author_html = Template::process_template_file('tpl_page_author.html', $page_data);
+		my $page_author_html = process_stock_template_file('tpl_page_author.html', $page_data);
 		my $author_filename = "author_" . filename_link_from_title($author);
 		my $outfilename = "$outdir/$author_filename";
 		print "==> Writing to file '$outfilename'...\n";
@@ -399,7 +410,7 @@ sub write_index_html_files {
 	$page_data{author_links_card} = create_author_links_card_data();
 	$page_data{recent_articles_card} = create_recent_articles_card_data();
 
-	my $page_index_html = Template::process_template_file('tpl_page_index.html', \%page_data);
+	my $page_index_html = process_stock_template_file('tpl_page_index.html', \%page_data);
 	my $outfilename = "$outdir/index.html";
 	print "==> Writing to file '$outfilename'...\n";
 	write_to_file($outfilename, $page_index_html);
