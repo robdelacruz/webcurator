@@ -3,6 +3,11 @@
 	min-width: 768px;
 	max-width: 840px;
 }
+header {
+}
+footer {
+	clear: both;
+}
 .main-col {
 	width: 71%;
 	float: left;
