@@ -6,6 +6,7 @@ use 5.012;
 
 use File::Basename;
 use File::Spec;
+use Cwd;
 
 my $do_log = 0;
 
@@ -216,7 +217,13 @@ sub process_template_file {
 	if (!defined $template_str) {
 		return "*** $template_filename not found ***";
 	}
-	return process_template($template_str, $data_node);
+
+	my $pwd = cwd();
+	my $path_to_template = dirname(File::Spec->rel2abs($template_filename));
+	chdir($path_to_template);
+	my $result = process_template($template_str, $data_node);
+	chdir($pwd);
+	return $result;
 }
 
 1;
