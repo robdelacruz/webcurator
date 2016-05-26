@@ -5,15 +5,18 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-	<div id="content">
+<section id="content">
+	{{&tpl_header.html($header)}}
+	{{&tpl_nav.html($nav)}}
+	<section class="main-col">
 		<h1>{{$title}}</h1>
-		<div class="main-col">
 		{{&tpl_articles_card.html($articles)}}
-		</div>
-	</div>
-	<div class="sub-col">
-		<h3>Other links go here</h3>
-	</div>
+	</section>
+	<section class="sub-col">
+		{{&tpl_article_links_card.html($recent_articles)}}
+	</section>
+	{{&tpl_footer.html($footer)}}
+</section>
 </body>
 </html>
 

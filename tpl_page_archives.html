@@ -6,15 +6,18 @@
 </head>
 <body>
 <section id="content">
+	{{&tpl_header.html($header)}}
+	{{&tpl_nav.html($nav)}}
 	<section class="main-col">
 		<h1>Archives</h1>
-	{{@.}}
+{{@article_links_by_year}}
 		{{&tpl_article_links_card.html}}
-	{{/@.}}
+{{/@article_links_by_year}}
 	</section>
 	<section class="sub-col">
-		<h3>Other links go here</h3>
+		{{&tpl_article_links_card.html($recent_articles)}}
 	</section>
+	{{&tpl_footer.html($footer)}}
 </section>
 </body>
 </html>

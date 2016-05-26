@@ -54,7 +54,7 @@ h2 {
 	text-decoration: underline;
 } 
 header aside {
-	margin: 0 0 0.2em;
+	margin: 0 0.3em 0.2em;
 	padding: 0;
 	font-style: italic;
 	display: inline;
@@ -64,5 +64,8 @@ header address {
 	padding: 0;
 	font-style: normal;
 	display: inline;
+}
+time {
+	font-style: italic;
 }
 
