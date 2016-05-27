@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 	<title>{{$author}}'s articles</title>
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-<section id="content">
+<section class="body-content-card">
 	{{&tpl_header.html($header)}}
 	{{&tpl_nav.html($nav)}}
-	<section class="main-col">
+	<section class="main-content-card">
 		<h1>{{$author}}'s articles</h1>
 		{{&tpl_article_links_card.html($articles_links_data)}}
 	</section>
-	<section class="sub-col">
+	<section class="side-content-card">
 		{{&tpl_article_links_card.html($recent_articles)}}
 	</section>
 	{{&tpl_footer.html($footer)}}

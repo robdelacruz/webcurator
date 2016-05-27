@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 {{+article}}
 	<title>{{$title}}</title>
@@ -7,14 +7,14 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-<section id="content">
+<section class="body-content-card">
 	{{&tpl_header.html($header)}}
 	{{&tpl_nav.html($nav)}}
-	<section class="main-col">
+	<section class="main-content-card">
 		{{&tpl_article_card.html($article)}}
 		{{&tpl_prev_next_article_card.html}}
 	</section>
-	<section class="sub-col">
+	<section class="side-content-card">
 		{{&tpl_article_links_card.html($recent_articles)}}
 	</section>
 	{{&tpl_footer.html($footer)}}

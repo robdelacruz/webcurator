@@ -1,71 +1,153 @@
-#content {
-	margin: 0 auto;
-	min-width: 768px;
-	max-width: 840px;
-}
-header {
+* {
 	margin: 0;
-	padding: 0.4em;
+	padding: 0;
 }
-footer {
-	margin: 0;
-	padding: 0.2em;
-	font-size: 0.8em;
+
+body {
+	font-size: 1em;
+	font-family: Verdana, sans-serif;
+}
+
+.x-small-card {
+	font-size: 0.7em;
+}
+
+.xx-small-card {
+	font-size: 0.5em;
+}
+
+.body-content-card {
+	margin: 0 5em;
+}
+
+.masthead-card {
+	padding: 0.5em 2em;
+	background-color: #eeeeee;
+}
+.masthead-card h1 {
+}
+.masthead-card .quip {
+	font-size: smaller;
 	font-style: italic;
+}
+
+.pagefoot-card {
+	padding: 0.5em 2em;
+	background-color: #eeeeee;
+	border-top: dashed 1px;
 	clear: both;
 }
-.main-col {
-	width: 71%;
-	float: left;
+.pagefoot-card p {
+	font-size: 0.8em;
 }
-.sub-col {
-	width: 26%;
-	float: left;
+.pagefoot-card address {
+	font-size:0.8em;
+	font-style: italic;
 }
-p { 
+.pagefoot-card a {
+	color: inherit;
+}
+
+.horizontal-menu-card {
+	padding: 0.8em 0;
+}
+.horizontal-menu-card ul {
+	list-style: none;
 	margin: 0;
-	padding: 0.2em 0;
+}
+.horizontal-menu-card li {
+	display: inline-block;
+	margin: 0 0.5em 0 0;
+}
+.horizontal-menu-card li a {
+	color: inherit;
+}
+
+.main-content-card {
+	padding: 0 2em 2em 0;
+	width: 65%;
+	float: left;
+}
+
+.side-content-card {
+	padding: 0 0 2em 2em;
+	width: 25%;
+	float: left;
+}
+
+.article-card {
+	padding: 1em 0;
+}
+.article-card header {
+	font-size: 1.2em;
+	margin: 0 0 0.8em;
+}
+.article-card header h1 {
+	margin: 0 0 0.3em;
+}
+.article-card header h2 {
+	margin: 0 0 0.3em;
+	font-size: smaller;
+}
+.article-card header h1 a {
+	text-decoration: none;
+	color: inherit;
+}
+.article-card header .quip {
+	font-style: italic;
+	font-size: 0.6em;
+	margin: 0;
+	width: 90%;
+}
+.article-card p {
 	font-size: 1em;
-} 
-article {
-	margin: 0.4em;
-	padding: 1em 1em;
-	border: solid 1px;
-	background-color: lightgray;
+	margin: 0 0 1.2em;
 }
-article header {
-	margin: 0;
-	padding: 0;
+.article-card ul, .article-card ol {
+	margin: 0 0 1.2em 1.5em;
 }
-h1 {
-	margin: 0;
-	padding: 0;
-	font-size: 1.5em;
-	font-weight: normal;
-	font-style: normal;
-	text-decoration: normal;
+.article-card a {
+	color: inherit;
 }
-h2 {
-	margin: 0;
-	padding: 0;
-	font-size: 1.5em;
-	font-weight: normal;
-	font-style: normal;
-	text-decoration: underline;
-} 
-header aside {
-	margin: 0 0.3em 0.2em;
-	padding: 0;
-	font-style: italic;
+.article-card h1, .article-card h2, .article-card h3, .article-card h4 {
+	font-size: 1em;
+	margin: 0 0 1em;
+}
+
+.byline-card {
+	font-size: 0.5em;
+	padding: 0.5em 0;
+	color: #333333;
+}
+.byline-card address {
 	display: inline;
-}
-header address {
-	margin: 0 0 0.4em;
-	padding: 0;
-	font-style: normal;
-	display: inline;
-}
-time {
 	font-style: italic;
+}
+.byline-card a[rel="author"] {
+	color: #333333;
+	font-weight: bold;
+	text-decoration: none;
+}
+.byline-card time {
+	display: inline;
+	padding: 0 0.5em;
+	font-style: italic;
+}
+
+.links-card {
+	padding: 1em 0;
+}
+.links-card h2 {
+	font-size: 1em;
+	margin: 0 0 0.5em;
+}
+.links-card ul {
+	list-style: none;
+}
+.links-card li {
+	font-size: 0.8em;
+}
+.links-card li a {
+	color: inherit;
 }
 
