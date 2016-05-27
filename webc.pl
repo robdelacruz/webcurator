@@ -162,6 +162,15 @@ sub process_article_files {
 sub create_article {
 	my ($title, $dt, $author, $type, $content) = @_;
 
+	# If title already exists, suffix it with a sequence number.
+	# Ex. Title 'Blog Entry' becomes 'Blog Entry1'... 'Blog Entry2', etc.
+	my $article_unique_title = $title;
+	if (exists $articles_by_title{$title}) {
+		my $articles_same_title = $articles_by_title{$title};
+		my $num_articles_same_title = @{$articles_same_title};
+		$article_unique_title .= $num_articles_same_title;
+	}
+
 	my $article_ref = {
 		title => $title,
 		dt => $dt,
@@ -170,7 +179,7 @@ sub create_article {
 		type => $type,
 		content => $content,
 		content_html => markdown($content),
-		article_link => filename_link_from_title($title),
+		article_link => filename_link_from_title($article_unique_title),
 		title_link => 'title_' . filename_link_from_title($title),
 		author_link => 'author_' . filename_link_from_title($author),
 	};
@@ -304,7 +313,7 @@ sub write_article_html_files {
 		};
 
 		my $page_article_html = process_stock_template_file('tpl_page_article.html', $page_data);
-		my $article_filename = filename_link_from_title($article->{title});
+		my $article_filename = $article->{article_link};
 		my $outfilename = "$outdir/$article_filename";
 		print "==> Writing to file '$outfilename'...\n";
 		write_to_file($outfilename, $page_article_html);
@@ -412,7 +421,7 @@ sub create_author_links_card_data {
 }
 
 sub create_recent_articles_card_data {
-	my $max_recent_articles = 5;
+	my $max_recent_articles = 10;
 	my @recent_articles;
 	foreach my $article (reverse @all_articles) {
 		push @recent_articles, $article;
