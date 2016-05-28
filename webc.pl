@@ -5,7 +5,7 @@ use warnings;
 use 5.012;
 
 use DateTime;
-use DateTime::Format::ISO8601;
+use DateTime::Format::Strptime;
 use File::Path;
 use File::Copy qw(copy);
 use Text::Markdown qw(markdown);
@@ -86,15 +86,24 @@ sub trim {
 sub datetime_from_str {
 	my ($dt_str) = @_;
 
-	my $dt;
-	eval {
-		$dt = DateTime::Format::ISO8601->parse_datetime($dt_str);
-	};
-	if ($@) {
-		return;
-	} else {
-		return $dt;
+	state $strptime_std = DateTime::Format::Strptime->new(
+		pattern => '%Y-%m-%d %H:%M',
+	);
+	state $strptime_iso = DateTime::Format::Strptime->new(
+			pattern => '%Y-%m-%dT%H:%M',
+	);
+	state $strptime_dateonly = DateTime::Format::Strptime->new(
+			pattern => '%Y-%m-%d',
+	);
+
+	my $dt = $strptime_std->parse_datetime($dt_str);
+	if (!$dt) {
+		$dt = $strptime_iso->parse_datetime($dt_str);
 	}
+	if (!$dt) {
+		$dt = $strptime_dateonly->parse_datetime($dt_str);
+	};
+	return $dt;
 }
 
 sub formatted_date {
