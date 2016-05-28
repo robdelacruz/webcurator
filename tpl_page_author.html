@@ -5,18 +5,18 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-<section class="body-content-card">
+<main class="body-content-card">
 	{{&tpl_header.html($header)}}
 	{{&tpl_nav.html($nav)}}
 	<section class="main-content-card">
 		<h1>{{$author}}'s articles</h1>
 		{{&tpl_article_links_card.html($articles_links_data)}}
 	</section>
-	<section class="side-content-card">
+	<aside class="side-content-card">
 		{{&tpl_article_links_card.html($recent_articles)}}
-	</section>
+	</aside>
 	{{&tpl_footer.html($footer)}}
-</section>
+</main>
 </body>
 </html>
 
