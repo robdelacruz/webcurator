@@ -289,6 +289,7 @@ sub write_to_file {
 sub filename_link_from_title {
 	my $item = shift;
 	$item =~ s/\s/\+/g;
+	$item =~ s/:/\+/g;
 	return "$item.html";
 }
 
