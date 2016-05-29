@@ -169,7 +169,7 @@ sub process_article_files {
 }
 
 sub create_article {
-	my ($title, $dt, $author, $type, $content) = @_;
+	my ($title, $dt, $author, $type, $format, $content) = @_;
 
 	# If title already exists, suffix it with a sequence number.
 	# Ex. Title 'Blog Entry' becomes 'Blog Entry1'... 'Blog Entry2', etc.
@@ -186,8 +186,9 @@ sub create_article {
 		formatted_date => formatted_date($dt),
 		author => $author,
 		type => $type,
+		format => $format,
 		content => $content,
-		content_html => markdown($content),
+		content_html => $format eq 'html'? $content : markdown($content),
 		article_link => filename_link_from_title($article_unique_title),
 		title_link => 'title_' . filename_link_from_title($title),
 		author_link => 'author_' . filename_link_from_title($author),
@@ -241,6 +242,7 @@ sub process_article_file {
 	my $article_title = $headers{'Title'};
 	my $article_author = $headers{'Author'};
 	my $article_type = $headers{'Type'};
+	my $article_format = $headers{'Format'};
 
 	if (defined $article_date && defined $article_title && defined $article_author) {
 		my $article_dt = datetime_from_str($article_date);
@@ -257,6 +259,7 @@ sub process_article_file {
 				$article_dt,
 				$article_author,
 				$article_type // '',
+				$article_format // '',
 				$article_content
 			);
 			submit_article($article_ref);
@@ -288,8 +291,8 @@ sub write_to_file {
 
 sub filename_link_from_title {
 	my $item = shift;
-	$item =~ s/\s/\+/g;
-	$item =~ s/:/\+/g;
+	$item =~ s/[\s]/+/g;		# whitespace replaced with '+'
+	$item =~ s/[^\w\+\-]/_/g;	# punctuation and misc chars replaced with '_'
 	return "$item.html";
 }
 
