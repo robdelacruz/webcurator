@@ -1,21 +1,38 @@
 # Web Curator
 
-Website and Blog generator
+Web Curator is a static site generator. It generates a complete website given an input list of text files.
 
 ## Goals
 
-Edit your website or blog using text files with annotations. And run webc.pl to generate the html.
+Generate a website from an input list of text files.
 
 Sample input file:
 
-<BOF>  
-WEBC 1.0  
-Title: The title of the web page  
-Date: 2016-04-06  
-Author: rob  
-Type: page type  
-  
-The text of the web page.  
-  
-This will likely use asciidoc or markdown format in the future. Currently not yet implemented.  
-<EOF>
+	WEBC 1.0  
+	Title: The title of the web page  
+	Date: 2016-04-06 15:30  
+	Author: rob  
+	Type: article  
+	Format: markdown
+	  
+	The text of the web page in markdown format or direct html depending on the 'Format' attribute.  
+
+Example - Given three input files: article1.txt, article2.txt, article3.txt
+Generate the website with this command:
+
+	./webc.pl article1.txt article2.txt article3.txt  
+
+Or use wildcards:
+
+	./webc.pl *.txt  
+
+This generates the set of website pages which can be uploaded to a web host:
+
+	index.html  
+	archives.html  
+	<article title 1>.html  
+	<article title 2>.html  
+	<article title 3>.html  
+	style.css  
+
+
