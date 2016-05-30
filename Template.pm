@@ -136,7 +136,15 @@ sub process_line_tokens {
 		# {{&file.ext}} to embed the 'file.ext' template
 		# {{&file.ext($key)}} to embed 'file.ext' template passing it the hash value of key
 		#
+		my $max_tokens_per_line = 50;
 		while ($template_line =~ /(\{\{(\$|&)((?:\w+?|\.)|(?:[\w\.]+?))(?:\((.*)\))?}})/) {
+			# Limit the number of times we loop for tokens
+			# This is necessary in the rare case the template str inadvertently references 
+			# a valid data token (for example, in articles about Web Curator itself!).
+			if ($max_tokens_per_line-- == 0) {
+				last;
+			}
+
 			my $token = $1;
 			my $sigil = $2;
 			my $cmd = $3;
