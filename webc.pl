@@ -538,6 +538,7 @@ sub create_footer_card_data {
 sub create_nav_card_data {
 	return [
 		{nav_item => 'Home', nav_link => 'index.html'},
+		{nav_item => 'Articles', nav_link => 'articles.html'},
 		{nav_item => 'Archives', nav_link => 'archives.html'},
 	];
 }
