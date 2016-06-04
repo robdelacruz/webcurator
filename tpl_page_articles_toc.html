@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Articles</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+<main class="body-content-card">
+	{{&tpl_header.html($header)}}
+	{{&tpl_nav.html($nav)}}
+	<section class="main-content-card">
+		<h1>Articles</h1>
+{{@article_links_by_topic}}
+		{{&tpl_article_links_card.html}}
+{{/@article_links_by_topic}}
+	</section>
+	<aside class="side-content-card">
+		{{&tpl_article_links_card.html($recent_articles)}}
+	</aside>
+	{{&tpl_footer.html($footer)}}
+</main>
+</body>
+</html>
+
