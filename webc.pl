@@ -6,12 +6,13 @@ use 5.012;
 
 use DateTime;
 use DateTime::Format::Strptime;
-use File::Path;
-use File::Copy qw(copy);
 use Text::Markdown qw(markdown);
-
 use File::Basename;
 use File::Spec;
+use File::Path;
+use File::Copy qw(copy);
+use File::Copy::Recursive qw(dircopy);
+use Getopt::Long qw(GetOptions);
 
 BEGIN {
 	sub script_dirname {
@@ -33,6 +34,20 @@ main();
 
 ### Start here ###
 sub main {
+	# Sample command-line:
+	# ./webc.pl --imagedir src/images --assetdir src/assets src/*.txt
+	#
+	# 1. Process all src/*.txt files and generate html into site/ directory.
+	# 2. Copy src/images into site/images directory.
+	# 3. Copy src/assets into site/assets directory.
+	#
+	my $src_imagedir;
+	my $src_assetdir;
+	GetOptions(
+		'imagedir=s' => \$src_imagedir,
+		'assetdir=s' => \$src_assetdir
+	) or die "Usage: $0 [--imagedir <image directory>] [--assetdir <asset directory>] <input files>";
+
 	process_article_files(@ARGV);
 
 	sub by_date {
@@ -89,6 +104,33 @@ sub main {
 	write_index_html_files($output_dir);
 
 	copy(File::Spec->catpath('', script_dirname(), 'style.css'), "$output_dir/style.css");
+
+	# Copy any generated images/ directory from webc-gen by default if param unspecified.
+	if (!$src_imagedir) {
+		$src_imagedir = 'images';
+	}
+
+	# Copy requested source directories.
+	if ($src_imagedir) {
+		if (-d $src_imagedir) {
+			my ($n1, $num_dirs, $n3) = dircopy($src_imagedir, "$output_dir/images");
+			if ($num_dirs > 0) {
+				print "Copied directory '$src_imagedir' to $output_dir/images.\n";
+			} else {
+				print "Error copying '$src_imagedir'.\n";
+			}
+		}
+	}
+	if ($src_assetdir) {
+		if (-d $src_assetdir) {
+			my ($n1, $num_dirs, $n3) = dircopy($src_assetdir, "$output_dir/assets");
+			if ($num_dirs > 0) {
+				print "Copied directory '$src_assetdir' to $output_dir/assets.\n";
+			} else {
+				print "Error copying '$src_assetdir'.\n";
+			}
+		}
+	}
 }
 
 ###
