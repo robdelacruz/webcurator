@@ -13,6 +13,7 @@ use File::Path;
 use File::Copy qw(copy);
 use File::Copy::Recursive qw(dircopy);
 use Getopt::Long qw(GetOptions);
+use Config::Tiny;
 
 BEGIN {
 	sub script_dirname {
@@ -30,60 +31,61 @@ my %articles_by_title;
 my %articles_by_author;
 my %articles_by_topic;
 
+my $siteconf;
+
 main();
 
 ### Start here ###
 sub main {
 	# Sample command-line:
-	# ./webc.pl --imagedir src/images --assetdir src/assets src/*.txt
+	# ./webc.pl --imagedir src/images --assetdir src/assets --conf site.conf src/*.txt
 	#
-	# 1. Process all src/*.txt files and generate html into site/ directory.
-	# 2. Copy src/images into site/images directory.
-	# 3. Copy src/assets into site/assets directory.
+	# 1. Copy src/images into site/images directory.
+	# 2. Copy src/assets into site/assets directory.
+	# 3. Read config settings from site.conf.
+	# 4. Process all src/*.txt files and generate html into site/ directory.
 	#
 	my $src_imagedir;
 	my $src_assetdir;
+	my $conf_file;
 	GetOptions(
 		'imagedir=s' => \$src_imagedir,
-		'assetdir=s' => \$src_assetdir
-	) or die "Usage: $0 [--imagedir <image directory>] [--assetdir <asset directory>] <input files>";
+		'assetdir=s' => \$src_assetdir,
+		'conf=s' => \$conf_file,
+	) or die <<"EOT";
+Usage: ./webc.pl [--imagedir <image directory>]
+                 [--assetdir <asset directory>]
+                 [--conf <config file>]
+                 <input files>
+
+Ex: 
+$0 --imagedir images --conf site.conf *.txt
+
+EOT
+
+	$src_imagedir = $src_imagedir // 'images';
+	$conf_file = $conf_file // 'site.conf';
+
+	my $output_dir = 'site';
+	clear_outputdir($output_dir);
+
+	# Copy image, assets source directories and any source files needed to output dir.
+	copy_dir($src_imagedir, "$output_dir/images");
+	copy_dir($src_assetdir, "$output_dir/assets");
+	copy_file('style.css', "$output_dir/style.css");
+
+	# Read settings from site config file
+	if (-e $conf_file) {
+		$siteconf = Config::Tiny->read($conf_file);
+	} else {
+		print "'$conf_file' not found. Using default settings.\n";
+		$siteconf = Config::Tiny->new();
+	}
+	fill_in_siteconf_defaults($siteconf);
 
 	process_article_files(@ARGV);
 
-	sub by_date {
-		$a->{dt} <=> $b->{dt} || 
-		$a->{title} cmp $b->{title};
-	}
-
-	sub by_seq_date {
-		$a->{seq} <=> $b->{seq} ||
-		$a->{dt} <=> $b->{dt} ||
-		$a->{title} cmp $b->{title};
-	}
-
-	@all_articles = sort by_date @all_articles;
-
-	foreach my $title (keys %articles_by_title) {
-		my $articles_of_title = $articles_by_title{$title};
-		my @sorted_articles = sort by_date @$articles_of_title;
-		$articles_by_title{$title} = \@sorted_articles;
-	}
-
-	foreach my $author (keys %articles_by_author) {
-		my $articles_of_author = $articles_by_author{$author};
-		my @sorted_articles = sort by_date @$articles_of_author;
-		$articles_by_author{$author} = \@sorted_articles;
-	}
-
-	foreach my $topic (keys %articles_by_topic) {
-		my $articles_of_topic = $articles_by_topic{$topic};
-		my @sorted_articles = sort by_seq_date @$articles_of_topic;
-		$articles_by_topic{$topic} = \@sorted_articles;
-	}
-
-	my $output_dir = 'site';
-
-	clear_outputdir($output_dir);
+	sort_article_data();
 
 	print "Writing articles html to $output_dir...\n";
 	write_article_html_files($output_dir);
@@ -99,35 +101,6 @@ sub main {
 
 	print "Writing index pages to $output_dir...\n";
 	write_index_html_files($output_dir);
-
-	copy(File::Spec->catpath('', script_dirname(), 'style.css'), "$output_dir/style.css");
-
-	# Copy any generated images/ directory from webc-gen by default if param unspecified.
-	if (!$src_imagedir) {
-		$src_imagedir = 'images';
-	}
-
-	# Copy requested source directories.
-	if ($src_imagedir) {
-		if (-d $src_imagedir) {
-			my ($n1, $num_dirs, $n3) = dircopy($src_imagedir, "$output_dir/images");
-			if ($num_dirs > 0) {
-				print "Copied directory '$src_imagedir' to $output_dir/images.\n";
-			} else {
-				print "Error copying '$src_imagedir'.\n";
-			}
-		}
-	}
-	if ($src_assetdir) {
-		if (-d $src_assetdir) {
-			my ($n1, $num_dirs, $n3) = dircopy($src_assetdir, "$output_dir/assets");
-			if ($num_dirs > 0) {
-				print "Copied directory '$src_assetdir' to $output_dir/assets.\n";
-			} else {
-				print "Error copying '$src_assetdir'.\n";
-			}
-		}
-	}
 }
 
 ###
@@ -166,9 +139,108 @@ sub formatted_date {
 
 	return DateTime::Format::Strptime::strftime('%e %b %Y', $dt);
 }
+
+sub copy_dir {
+	my ($src_dir, $target_dir) = @_;
+
+	if ($src_dir) {
+		if (-d $src_dir) {
+			my ($n1, $num_dirs, $n3) = dircopy($src_dir, $target_dir);
+			if ($num_dirs > 0) {
+				print "Copied directory '$src_dir' to $target_dir.\n";
+			} else {
+				print "Error copying '$src_dir'.\n";
+			}
+		}
+	}
+}
+
+sub copy_file {
+	my ($src_file, $target_file) = @_;
+	copy(File::Spec->catpath('', script_dirname(), $src_file), $target_file);
+}
 ### End Helper functions
 ###
 
+# Set defaults to site config settings that weren't defined
+# Default setting will be used when either:
+#   - entry doesn't exist
+#	- entry defined as blank, as in "site_title="
+sub fill_in_siteconf_defaults {
+	my $conf = shift;
+
+	# [site]
+	$conf->{site} = $conf->{site} // {};
+	
+	if (!$conf->{site}{site_title}) {
+		$conf->{site}{site_title} = 'Web Curator Site';
+	}
+	if (!$conf->{site}{site_teaser}) {
+		$conf->{site}{site_teaser} = 'Generated by Web Curator'
+	}
+	if (!$conf->{site}{site_footer}) {
+		$conf->{site}{site_footer} = 'Site generated by Web Curator';
+	}
+	if (!$conf->{site}{site_footer_aside}) {
+		$conf->{site}{site_footer_aside} = 
+			'<a href="https://github.com/robdelacruz/webcurator">https://github.com/robdelacruz/webcurator</a>';
+	}
+	if (!$conf->{site}{articles_page_heading}) {
+		$conf->{site}{articles_page_heading} = 'Articles Contents';
+	}
+	if (!$conf->{site}{archives_page_heading}) {
+		$conf->{site}{archives_page_heading} = 'Archives';
+	}
+	
+	# [articles]
+	$conf->{articles} = $conf->{articles} // {};
+
+	if (!$conf->{articles}{topic_order}) {
+		$conf->{articles}{topic_order} = '';
+	}
+	if (!$conf->{articles}{article_show_date}) {
+		$conf->{articles}{article_show_date} = 'y';
+	}
+	if (!$conf->{articles}{article_show_author}) {
+		$conf->{articles}{article_show_author} = 'y';
+	}
+	if (!$conf->{articles}{article_show_topic_link}) {
+		$conf->{articles}{article_show_topic_link} = 'n';
+	}
+}
+
+# Sort global data structures
+sub sort_article_data {
+	sub by_date {
+		$a->{dt} <=> $b->{dt} || 
+		$a->{title} cmp $b->{title};
+	}
+	sub by_seq_date {
+		$a->{seq} <=> $b->{seq} ||
+		$a->{dt} <=> $b->{dt} ||
+		$a->{title} cmp $b->{title};
+	}
+
+	@all_articles = sort by_date @all_articles;
+
+	foreach my $title (keys %articles_by_title) {
+		my $articles_of_title = $articles_by_title{$title};
+		my @sorted_articles = sort by_date @$articles_of_title;
+		$articles_by_title{$title} = \@sorted_articles;
+	}
+
+	foreach my $author (keys %articles_by_author) {
+		my $articles_of_author = $articles_by_author{$author};
+		my @sorted_articles = sort by_date @$articles_of_author;
+		$articles_by_author{$author} = \@sorted_articles;
+	}
+
+	foreach my $topic (keys %articles_by_topic) {
+		my $articles_of_topic = $articles_by_topic{$topic};
+		my @sorted_articles = sort by_seq_date @$articles_of_topic;
+		$articles_by_topic{$topic} = \@sorted_articles;
+	}
+}
 
 # Return whether filename has WEBC signature
 sub is_webc_file {
@@ -382,8 +454,8 @@ sub write_article_html_files {
 		$next_article = $all_articles[$i+1];
 
 		my $page_data = {
-			header => create_header_card_data('Web Curator', 'Curated articles'),
-			footer => create_footer_card_data('Generated by Web Curator', ''),
+			header => create_header_card_data(),
+			footer => create_footer_card_data(),
 			nav => create_nav_card_data(),
 			article => $article,
 			prev_article => $prev_article,
@@ -431,8 +503,9 @@ sub write_archives_html_file {
 	my $outdir = shift;
 
 	my $page_data = {
-		header => create_header_card_data('Web Curator', 'Curated articles'),
-		footer => create_footer_card_data('Generated by Web Curator', ''),
+		header => create_header_card_data(),
+		footer => create_footer_card_data(),
+		page_title => $siteconf->{site}{archives_page_heading},
 		nav => create_nav_card_data(),
 		article_links_by_year => create_article_links_by_year_data(\@all_articles),
 		recent_articles => create_recent_articles_card_data(),
@@ -450,8 +523,8 @@ sub write_author_html_files() {
 
 	foreach my $author (keys %articles_by_author) {
 		my $page_data = {
-			header => create_header_card_data('Web Curator', 'Curated articles'),
-			footer => create_footer_card_data('Generated by Web Curator', ''),
+			header => create_header_card_data(),
+			footer => create_footer_card_data(),
 			nav => create_nav_card_data(),
 			author => $author,
 			article_links_by_year =>
@@ -496,20 +569,16 @@ sub create_recent_articles_card_data {
 }
 
 sub create_header_card_data {
-	my ($header_title, $header_aside) = @_;
-
 	return {
-		header_title => $header_title,
-		header_aside => $header_aside,
+		header_title => $siteconf->{site}{site_title},
+		header_aside => $siteconf->{site}{site_teaser},
 	};
 }
 
 sub create_footer_card_data {
-	my ($footer_title, $footer_aside) = @_;
-
 	return {
-		footer_title => $footer_title,
-		footer_aside => $footer_aside,
+		footer_title => $siteconf->{site}{site_footer},
+		footer_aside => $siteconf->{site}{site_footer_aside},
 	};
 }
 
@@ -525,14 +594,15 @@ sub create_nav_card_data {
 sub write_index_html_files {
 	my $outdir = shift;
 
-	my %page_data;
-	$page_data{header} = create_header_card_data('Web Curator', 'Curated articles');
-	$page_data{footer} = create_footer_card_data('Generated by Web Curator', '');
-	$page_data{nav} = create_nav_card_data();
-	$page_data{author_links} = create_author_links_card_data();
-	$page_data{recent_articles} = create_recent_articles_card_data();
+	my $page_data = {
+		header => create_header_card_data(),
+		footer => create_footer_card_data(),
+		nav => create_nav_card_data(),
+		author_links => create_author_links_card_data(),
+		recent_articles => create_recent_articles_card_data(),
+	};
 
-	my $page_index_html = process_stock_template_file('tpl_page_index.html', \%page_data);
+	my $page_index_html = process_stock_template_file('tpl_page_index.html', $page_data);
 	my $outfilename = "$outdir/index.html";
 	print "==> Writing to file '$outfilename'...\n";
 	write_to_file($outfilename, $page_index_html);
@@ -543,7 +613,13 @@ sub write_articles_toc_html_file {
 	my $outdir = shift;
 
 	my @article_links_by_topic;
-	foreach my $topic (keys %articles_by_topic) {
+	my @ordered_topics;
+	if ($siteconf->{articles}{topic_order} eq '') {
+		@ordered_topics = sort keys %articles_by_topic;
+	} else {
+		@ordered_topics = keys %articles_by_topic;
+	}
+	foreach my $topic (@ordered_topics) {
 		my $article_links_data = {
 			heading => $topic,
 			articles => $articles_by_topic{$topic},
@@ -552,8 +628,9 @@ sub write_articles_toc_html_file {
 	}
 
 	my $page_data = {
-		header => create_header_card_data('Web Curator', 'Curated articles'),
-		footer => create_footer_card_data('Generated by Web Curator', ''),
+		header => create_header_card_data(),
+		footer => create_footer_card_data(),
+		page_title => $siteconf->{site}{articles_page_heading},
 		nav => create_nav_card_data(),
 		article_links_by_topic => \@article_links_by_topic,
 		recent_articles => create_recent_articles_card_data(),
