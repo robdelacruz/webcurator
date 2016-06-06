@@ -14,6 +14,7 @@ use File::Copy qw(copy);
 use File::Copy::Recursive qw(dircopy);
 use Getopt::Long qw(GetOptions);
 use Config::Tiny;
+use Win32::Autoglob;
 
 BEGIN {
 	sub script_dirname {
