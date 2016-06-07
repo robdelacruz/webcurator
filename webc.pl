@@ -618,8 +618,25 @@ sub write_articles_toc_html_file {
 	if ($siteconf->{articles}{topic_order} eq '') {
 		@ordered_topics = sort keys %articles_by_topic;
 	} else {
-		@ordered_topics = keys %articles_by_topic;
+		# Arrange topics in order of siteconf topic_order preference
+		# Use existing topics in topic_order first, then for the remaining unspecified
+		# topics, add them at the end in alphabetic order
+
+		# Get all topics listed in topic_order
+		@ordered_topics = split(/\s*,\s*/, $siteconf->{articles}{topic_order});
+
+		# Filter out topics without any posts
+		@ordered_topics = grep {exists $articles_by_topic{$_}} @ordered_topics;
+
+		# Add the remaining topics, arranged in alphabetical order
+		my %already_added_topics = map {$_ => 1} @ordered_topics;
+		foreach my $topic (sort keys %articles_by_topic) {
+			if (!exists $already_added_topics{$topic}) {
+				push @ordered_topics, $topic;
+			}
+		}
 	}
+
 	foreach my $topic (@ordered_topics) {
 		my $article_links_data = {
 			heading => $topic,
