@@ -6,6 +6,7 @@ use 5.012;
 
 use DateTime;
 use DateTime::Format::Strptime;
+use Cwd;
 use Text::Markdown qw(markdown);
 use File::Basename;
 use File::Spec;
@@ -23,6 +24,7 @@ BEGIN {
 	use lib script_dirname();
 }
 use Template;
+use WPExporter;
 
 ###
 ### Global structures
@@ -38,6 +40,27 @@ main();
 
 ### Start here ###
 sub main {
+	my $usage_txt = <<"EOT";
+
+Usage - Generate website from input text files:
+
+       ./webc.pl [--imagedir <image directory>]
+                 [--assetdir <asset directory>]
+                 [--conf <config file>]
+                 <input files>
+Ex. 
+   $0 --imagedir images --conf site.conf *.txt
+
+
+Usage - Generate input text files from exported wordpress xml file and 
+        optionally auto-generate website.
+
+       ./webc.pl --exportwp <wordpress export file> [--autogen]
+Ex.
+   $0 --exportwp wpsite.wordpress.xml --autogen
+
+EOT
+
 	# Sample command-line:
 	# ./webc.pl --imagedir src/images --assetdir src/assets --conf site.conf src/*.txt
 	#
@@ -46,23 +69,51 @@ sub main {
 	# 3. Read config settings from site.conf.
 	# 4. Process all src/*.txt files and generate html into site/ directory.
 	#
+	# ./webc.pl --exportwp wpexport.xml --autogen
+	#
+	# 1. Extract posts from wpexport.xml and generate .txt files into output/ directory.
+	# 2. (If --autogen specified) Process output/*.txt files and generate html
+	#    into site/ directory.
+	#
 	my $src_imagedir;
 	my $src_assetdir;
 	my $conf_file;
+	my $wpexport_file;
+	my $autogen;
 	GetOptions(
 		'imagedir=s' => \$src_imagedir,
 		'assetdir=s' => \$src_assetdir,
-		'conf=s' => \$conf_file,
-	) or die <<"EOT";
-Usage: ./webc.pl [--imagedir <image directory>]
-                 [--assetdir <asset directory>]
-                 [--conf <config file>]
-                 <input files>
+		'conf=s'     => \$conf_file,
+		'exportwp=s' => \$wpexport_file,
+		'autogen'    => \$autogen,
+	) or die $usage_txt;
 
-Ex: 
-$0 --imagedir images --conf site.conf *.txt
+	if ($wpexport_file) {
+		# Generate input text files into output/ dir
+		WPExporter::export_wp($wpexport_file);
 
-EOT
+		# Generate website from files generated from export_wp(): 
+		#   output/*.txt, output/images, output/site.conf
+		if ($autogen) {
+			my @article_files = glob('output/*.txt');
+			generate_site(\@article_files, 'output/site.conf', 'output/images', undef);
+		}
+	} else {
+		if (@ARGV == 0) {
+			print $usage_txt;
+			exit 0;
+		}
+
+		generate_site(\@ARGV, $conf_file, $src_imagedir, $src_assetdir);
+	}
+}
+
+sub generate_site {
+	my ($article_files, $conf_file, $src_imagedir, $src_assetdir) = @_;
+
+	if (@$article_files == 0) {
+		return;
+	}
 
 	$src_imagedir = $src_imagedir // 'images';
 	$conf_file = $conf_file // 'site.conf';
@@ -84,7 +135,7 @@ EOT
 	}
 	fill_in_siteconf_defaults($siteconf);
 
-	process_article_files(@ARGV);
+	process_article_files(@$article_files);
 
 	sort_article_data();
 
