@@ -99,6 +99,15 @@ body {
 	margin: 0;
 	width: 90%;
 }
+.article-card .teaser {
+	font-size: 0.8em;
+	margin: 0 0 2em;
+	width: 75%;
+	font-style: italic;
+}
+.article-card .teaser p {
+	margin: 0 0 0.5em;
+}
 .article-card p {
 	font-size: 1em;
 	margin: 0 0 1.2em;
