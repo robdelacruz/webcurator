@@ -1,8 +1,6 @@
 package WPExporter;
 
-use strict;
-use warnings;
-use 5.012;
+use v5.14;
 
 use XML::Tiny;
 use File::Path;
@@ -271,14 +269,17 @@ EOT
 }
 
 sub export_wp {
-	my $wp_export_filename = shift;
+	my ($wp_export_filename, $output_dir) = @_;
 
-	if (!-e $wp_export_filename) {
+	unless (-e $wp_export_filename) {
 		print "Can't open '$wp_export_filename'.\n";
 		return;
 	}
 
-	my $doc = XML::Tiny::parsefile($wp_export_filename);
+	print "Processing $wp_export_filename...\n";
+
+	my $doc = eval {XML::Tiny::parsefile($wp_export_filename)};
+	return unless $doc;
 
 	my $rss_node = find_child_node($doc, 'rss');
 	die if !defined $rss_node;
@@ -309,9 +310,6 @@ sub export_wp {
 		}
 	}
 	die "No posts available.\n" if @item_nodes == 0;
-
-	my $output_dir = 'output';
-	clear_dir($output_dir);
 
 	print "Writing output post files to $output_dir...\n";
 

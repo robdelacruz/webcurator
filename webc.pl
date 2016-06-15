@@ -1,8 +1,6 @@
 #!/usr/bin/perl
 
-use strict;
-use warnings;
-use 5.012;
+use v5.14;
 
 use DateTime;
 use DateTime::Format::Strptime;
@@ -90,7 +88,24 @@ EOT
 
 	if ($wpexport_file) {
 		# Generate input text files into output/ dir
-		WPExporter::export_wp($wpexport_file);
+		my $output_dir = 'output';
+		clear_dir($output_dir);
+
+		# If filename contains a sequence number such as wordpressblog.001.xml,
+		# process also wordpressblog.002.xml, wordpressblog.nnn.xml...
+		if (my ($base_part, $seq_num) = $wpexport_file =~ /^(.+)\.(\d+)\.xml$/) {
+			my $max_seq = '9' x length($seq_num);
+			for my $seq_part ($seq_num ... $max_seq) {
+				my $cur_export_file = "$base_part.$seq_part.xml";
+				last unless -e $cur_export_file;
+
+				WPExporter::export_wp($cur_export_file, $output_dir);
+			}
+		}
+		else {
+			# Single export file only
+			WPExporter::export_wp($wpexport_file, $output_dir);
+		}
 
 		# Generate website from files generated from export_wp(): 
 		#   output/*.txt, output/images, output/site.conf
@@ -119,7 +134,7 @@ sub generate_site {
 	$conf_file = $conf_file // 'site.conf';
 
 	my $output_dir = 'site';
-	clear_outputdir($output_dir);
+	clear_dir($output_dir);
 
 	# Copy image, assets source directories and any source files needed to output dir.
 	copy_dir($src_imagedir, "$output_dir/images");
@@ -463,11 +478,11 @@ sub process_article_file {
 	close $harticlefile;
 }
 
-sub clear_outputdir {
-	my $outdir = shift;
+sub clear_dir {
+	my $dir = shift;
 
-	rmtree $outdir;
-	mkdir $outdir;
+	rmtree $dir;
+	mkdir $dir;
 }
 
 sub write_to_file {
