@@ -14,5 +14,21 @@
 	</div>
 {{/+teaser}}
 	{{$content_html}}
+	<footer>
+{{+topics}}
+		<p class="topics">Topics:
+		{{@.}}
+			<a href="{{$topic_link}}">{{$topic}}</a>
+		{{/@.}}
+		</p>
+{{/+topics}}
+{{+tags}}
+		<p class="tags">Tags:
+		{{@.}}
+			<a href="{{$tag_link}}">{{$tag}}</a>
+		{{/@.}}
+		</p>
+{{/+tags}}
+	</footer>
 </article>
 

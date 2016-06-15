@@ -360,7 +360,7 @@ sub process_article_files {
 }
 
 sub create_article {
-	my ($title, $dt, $author, $type, $format, $topics, $seq, $content) = @_;
+	my ($title, $dt, $author, $type, $format, $topics, $tags, $seq, $content) = @_;
 
 	# If title already exists, suffix it with a sequence number.
 	# Ex. Title 'Blog Entry' becomes 'Blog Entry1'... 'Blog Entry2', etc.
@@ -378,7 +378,8 @@ sub create_article {
 		author => $author,
 		type => $type,
 		format => $format,
-		topics => $topics,
+		topics => @$topics ? $topics : undef,
+		tags => @$tags ? $tags : undef,
 		seq => $seq,
 		content => $content,
 		content_html => $format eq 'html'? $content : markdown($content),
@@ -401,8 +402,15 @@ sub submit_article {
 	my $author = $article_ref->{author};
 	push(@{$articles_by_author{$author}}, $article_ref);
 
-	foreach my $topic (@{$article_ref->{topics}}) {
-		push(@{$articles_by_topic{$topic}}, $article_ref);
+	if (defined $article_ref->{topics}) {
+		foreach my $topic_hash (@{$article_ref->{topics}}) {
+			my $topic_name = $topic_hash->{topic};
+			push(@{$articles_by_topic{$topic_name}}, $article_ref);
+		}
+	}
+	else {
+		# If article not filed under any topics, add to default 'Uncategorized' topic
+		push(@{$articles_by_topic{'Uncategorized'}}, $article_ref);
 	}
 }
 
@@ -440,11 +448,28 @@ sub process_article_file {
 	my $article_author = $headers{'Author'};
 	my $article_type = $headers{'Type'};
 	my $article_format = $headers{'Format'};
-	my @article_topics = split(/\s*,\s*/, $headers{'Topic'} // '');
 	my $article_seq = $headers{'Sequence'};
 
-	if (!@article_topics) {
-		push @article_topics, 'Uncategorized';
+	my @article_topics;
+	if ($headers{Topic} =~ /\S/) {
+		my @article_topic_names = split(/\s*,\s*/, $headers{'Topic'});
+		@article_topics = map {
+			{
+				topic => $_,
+				topic_link => 'topic_' . filename_link_from_title($_),
+			}
+		} @article_topic_names;
+	}
+
+	my @article_tags;
+	if ($headers{Tags} =~ /\S/) {
+		my @article_tag_names = split(/\s*,\s*/, $headers{'Tags'});
+		@article_tags = map {
+			{
+				tag => $_,
+				tag_link => 'tag_' . filename_link_from_title($_),
+			}
+		} @article_tag_names;
 	}
 
 	if (defined $article_date && defined $article_title && defined $article_author) {
@@ -464,6 +489,7 @@ sub process_article_file {
 				$article_type // '',
 				$article_format // '',
 				\@article_topics,
+				\@article_tags,
 				$article_seq // 99999,
 				$article_content
 			);

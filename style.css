@@ -122,6 +122,17 @@ body {
 	font-size: 1em;
 	margin: 0 0 1em;
 }
+.article-card footer {
+	font-size: 0.8em;
+	margin: 0;
+}
+.article-card footer p {
+	margin: 0;
+	padding: 0;
+}
+.article-card .topics a, .article-card .tags a {
+	margin: 0 0.3em 0 0;
+}
 
 .byline-card {
 	font-size: 0.5em;
