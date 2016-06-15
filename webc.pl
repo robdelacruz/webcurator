@@ -530,7 +530,8 @@ sub filename_link_from_title {
 sub process_stock_template_file {
 	my ($template_filename, $page_data) = @_;
 
-	my $template_filepath = File::Spec->catpath('', script_dirname(), $template_filename);
+	my $template_filepath =
+		File::Spec->catpath('', script_dirname(), "templates/$template_filename");
 	return Template::process_template_file($template_filepath, $page_data);
 }
 
