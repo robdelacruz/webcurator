@@ -1,0 +1,15 @@
+WEBC 1.0
+Title: Harry Browne
+Date: 1993-12-31
+Author: rob
+Type: person
+Topic: Libertarian, Tech
+Sequence: 1
+
+Harry Browne is the author of the following books:
+
+The Secret of Selling Anything
+How I Found Freedom in an Unfree World
+
+
+

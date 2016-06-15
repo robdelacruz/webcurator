@@ -1,0 +1,15 @@
+WEBC 1.0
+Title: Sierra
+Date: 1986-01-01 08:00:00
+Author: rob
+Type: thing
+Topic: Tech, Software
+Sequence: 10
+
+Sierra is the company of Ken and Roberta Williams.
+
+Prominent games:
+King's Quest
+Space Quest
+Police Quest
+
