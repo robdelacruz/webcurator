@@ -162,9 +162,11 @@ sub save_image {
 sub replace_image_urls {
 	my ($content, $output_dir) = @_;
 
-	state $images_dir_created = 0;
 	my $images_rel_dir = 'images';
-	my $target_images_dir = "$output_dir/$images_rel_dir";
+	my $images_dir = "$output_dir/$images_rel_dir";
+	unless (-d $images_dir) {
+		mkdir $images_dir;
+	}
 
 	# Match this:
 	# "https://<wp_id>.files.wordpress.com/nnn/nn/.../<image filename>?p=nnn" 
@@ -175,13 +177,8 @@ sub replace_image_urls {
 		my $new_image_url = "$images_rel_dir/$image_filename";
 		$content =~ s/\Q$old_image_url\E/$new_image_url/g;
 
-		if (!$images_dir_created) {
-			clear_dir($target_images_dir);
-			$images_dir_created = 1;
-		}
-
-		# Save $old_image_url linked file to images/<image filename>
-		save_image($old_image_url, $target_images_dir, $image_filename);
+		# Save $old_image_url linked file to $images_dir/<image filename>
+		save_image($old_image_url, $images_dir, $image_filename);
 	}
 
 	return $content;
@@ -268,8 +265,8 @@ EOT
 	close $houtfile;
 }
 
-sub export_wp {
-	my ($wp_export_filename, $output_dir) = @_;
+sub export_single_wpfile {
+	my ($wp_export_filename, $output_dir, $export_info) = @_;
 
 	unless (-e $wp_export_filename) {
 		print "Can't open '$wp_export_filename'.\n";
@@ -286,8 +283,8 @@ sub export_wp {
 	my $channel_node = find_child_node($rss_node, 'channel');
 	die if !defined $channel_node;
 
-	my $blog_title = node_text(find_child_node($channel_node, 'title'));
-	my $blog_description = node_text(find_child_node($channel_node, 'description'));
+	$export_info->{blog_title} = node_text(find_child_node($channel_node, 'title'));
+	$export_info->{blog_description} = node_text(find_child_node($channel_node, 'description'));
 
 	my $channel_child_nodes = $channel_node->{content};
 
@@ -313,7 +310,6 @@ sub export_wp {
 
 	print "Writing output post files to $output_dir...\n";
 
-	my %all_categories;
 	foreach my $item_node (@item_nodes) {
 		my $title_node = find_child_node($item_node, 'title');
 		my $creator_node = find_child_node($item_node, 'dc:creator');
@@ -332,7 +328,7 @@ sub export_wp {
 		my $tags = csv_text_from_nodes(\@tag_nodes);
 
 		foreach my $category_node (@category_nodes) {
-			$all_categories{node_text($category_node)}++;
+			$export_info->{categories}{node_text($category_node)}++;
 		}
 
 		$content = replace_image_urls($content, $output_dir);
@@ -341,12 +337,35 @@ sub export_wp {
 								$categories, $tags, $content);
 		}
 	}
+}
 
-	my @all_categories = sort keys %all_categories;
+sub export_wp {
+	my ($wp_export_filename, $output_dir) = @_;
+
+	clear_dir($output_dir);
+
+	# If filename contains a sequence number such as wordpressblog.001.xml,
+	# process also wordpressblog.002.xml, wordpressblog.nnn.xml...
+	my %export_info;
+	if (my ($base_part, $seq_num) = $wp_export_filename =~ /^(.+)\.(\d+)\.xml$/) {
+		my $max_seq = '9' x length($seq_num);
+		for my $seq_part ($seq_num ... $max_seq) {
+			my $cur_export_file = "$base_part.$seq_part.xml";
+			last unless -e $cur_export_file;
+
+			export_single_wpfile($cur_export_file, $output_dir, \%export_info);
+		}
+	}
+	else {
+		# Single export file only
+		export_single_wpfile($wp_export_filename, $output_dir, \%export_info);
+	}
+
+	my @all_categories = sort keys $export_info{categories};
 
 	print "Writing to config file $output_dir/site.conf...\n";
-	generate_config_file($output_dir, 'site.conf', $blog_title, $blog_description,
-							\@all_categories);
+	generate_config_file($output_dir, 'site.conf',
+		$export_info{blog_title}, $export_info{blog_description}, \@all_categories);
 }
 
 1;

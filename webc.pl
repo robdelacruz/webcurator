@@ -87,25 +87,9 @@ EOT
 	) or die $usage_txt;
 
 	if ($wpexport_file) {
-		# Generate input text files into output/ dir
+		# Generate input text files, site.conf, download images  into output/ dir
 		my $output_dir = 'output';
-		clear_dir($output_dir);
-
-		# If filename contains a sequence number such as wordpressblog.001.xml,
-		# process also wordpressblog.002.xml, wordpressblog.nnn.xml...
-		if (my ($base_part, $seq_num) = $wpexport_file =~ /^(.+)\.(\d+)\.xml$/) {
-			my $max_seq = '9' x length($seq_num);
-			for my $seq_part ($seq_num ... $max_seq) {
-				my $cur_export_file = "$base_part.$seq_part.xml";
-				last unless -e $cur_export_file;
-
-				WPExporter::export_wp($cur_export_file, $output_dir);
-			}
-		}
-		else {
-			# Single export file only
-			WPExporter::export_wp($wpexport_file, $output_dir);
-		}
+		WPExporter::export_wp($wpexport_file, $output_dir);
 
 		# Generate website from files generated from export_wp(): 
 		#   output/*.txt, output/images, output/site.conf
