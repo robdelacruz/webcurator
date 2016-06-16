@@ -361,7 +361,7 @@ sub export_wp {
 		export_single_wpfile($wp_export_filename, $output_dir, \%export_info);
 	}
 
-	my @all_categories = sort keys $export_info{categories};
+	my @all_categories = sort {"\L$a" cmp "\L$b"} keys $export_info{categories};
 
 	print "Writing to config file $output_dir/site.conf...\n";
 	generate_config_file($output_dir, 'site.conf',

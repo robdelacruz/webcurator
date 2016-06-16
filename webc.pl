@@ -565,7 +565,7 @@ sub create_article_links_by_year_data {
 	#	...
 	# ]
 	my @article_links_by_year;
-	foreach my $year (sort keys %articles_of_year) {
+	foreach my $year (reverse sort keys %articles_of_year) {
 		my $article_links_data = {
 			heading => $year,
 			articles => $articles_of_year{$year},
