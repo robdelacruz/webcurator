@@ -192,11 +192,8 @@ sub replace_shortcodes {
 	# [caption id="" ...]<img ... /> (Caption goes here) [/caption]
 	$content =~ s/\[caption\s+.*?\]\s*(<img.*?\/>)\s*(.*?)\s*\[\/caption\]/<figure>\1<figcaption>\2<\/figcaption><\/figure>/;
 
-	# Strip out youtube shortcode
-	$content =~ s/\[youtube\s+(\S+)\s+\]/\1/g;
-
-	# Make youtube url a clickable link
-	$content =~ s/(https?:\/\/\S+)/<a href='\1'>\1<\/a>/g;
+	# Strip out youtube shortcode and make youtube url a link
+	$content =~ s/\[youtube\s+(\S+)\s+\]/<a href="\1">\1<\/a>/g;
 
 	return $content;
 }
