@@ -10,7 +10,9 @@
 	{{&tpl_header.html($header)}}
 	{{&tpl_nav.html($nav)}}
 	<section class="main-content-card">
-		<h1>{{$page_title}}</h1>
+{{+page_title}}
+		<h1>{{$.}}</h1>
+{{/+page_title}}
 {{@article_links_by_topic}}
 		{{&tpl_article_links_card.html}}
 {{/@article_links_by_topic}}

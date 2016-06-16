@@ -4,6 +4,7 @@ Author: rob
 Type: thing
 Date: 2016-04-25
 Topic: Finer Things, Tech
+Tags: coffee
 
 Coffee is a beverage made with coffee beans.
 

@@ -31,6 +31,7 @@ my @all_articles;
 my %articles_by_title;
 my %articles_by_author;
 my %articles_by_topic;
+my %articles_by_tag;
 
 my $siteconf;
 
@@ -141,17 +142,23 @@ sub generate_site {
 
 	sort_article_data();
 
-	print "Writing articles html to $output_dir...\n";
+	print "Writing articles html files to $output_dir...\n";
 	write_article_html_files($output_dir);
 
-	print "Writing author pages html to $output_dir...\n";
+	print "Writing author html files to $output_dir...\n";
 	write_author_html_files($output_dir);
 
-	print "Writing archives html page to $output_dir...\n";
+	print "Writing archives html file to $output_dir...\n";
 	write_archives_html_file($output_dir);
 
-	print "Writing articles toc html page to $output_dir...\n";
+	print "Writing articles toc html file to $output_dir...\n";
 	write_articles_toc_html_file($output_dir);
+
+	print "Writing topics html files to $output_dir...\n";
+	write_topics_html_files($output_dir);
+
+	print "Writing tags html files to $output_dir...\n";
+	write_tags_html_files($output_dir);
 
 	print "Writing index pages to $output_dir...\n";
 	write_index_html_files($output_dir);
@@ -399,6 +406,13 @@ sub submit_article {
 		# If article not filed under any topics, add to default 'Uncategorized' topic
 		push(@{$articles_by_topic{'Uncategorized'}}, $article_ref);
 	}
+
+	if (defined $article_ref->{tags}) {
+		foreach my $tag_hash (@{$article_ref->{tags}}) {
+			my $tag_name = $tag_hash->{tag};
+			push(@{$articles_by_tag{$tag_name}}, $article_ref);
+		}
+	}
 }
 
 # Parse one article text file and add entry to hash structure
@@ -440,6 +454,8 @@ sub process_article_file {
 	my @article_topics;
 	if ($headers{Topic} =~ /\S/) {
 		my @article_topic_names = split(/\s*,\s*/, $headers{'Topic'});
+		# $$ Optimization needed?
+		#    topic_link is duplicated for every topic referenced in the article
 		@article_topics = map {
 			{
 				topic => $_,
@@ -451,6 +467,8 @@ sub process_article_file {
 	my @article_tags;
 	if ($headers{Tags} =~ /\S/) {
 		my @article_tag_names = split(/\s*,\s*/, $headers{'Tags'});
+		# $$ Optimization needed?
+		#    tag_link is duplicated for every tag referenced in the article
 		@article_tags = map {
 			{
 				tag => $_,
@@ -741,3 +759,54 @@ sub write_articles_toc_html_file {
 	write_to_file($outfilename, $articles_toc_html);
 }
 
+sub write_topics_html_files {
+	my $outdir = shift;
+
+	for my $topic (keys %articles_by_topic) {
+		my @article_links_by_topic;
+		push @article_links_by_topic, {
+			heading => "Articles under '$topic'",
+			articles => $articles_by_topic{$topic},
+		};
+
+		my $page_data = {
+			header => create_header_card_data(),
+			footer => create_footer_card_data(),
+			nav => create_nav_card_data(),
+			article_links_by_topic => \@article_links_by_topic,
+			recent_articles => create_recent_articles_card_data(),
+		};
+
+		my $topic_html = process_stock_template_file('tpl_page_articles_toc.html', $page_data);
+		my $topic_filename = 'topic_' . filename_link_from_title($topic);
+		my $outfilename = "$outdir/$topic_filename";
+		print "==> Writing to file '$outfilename'...\n";
+		write_to_file($outfilename, $topic_html);
+	}
+}
+
+sub write_tags_html_files {
+	my $outdir = shift;
+
+	for my $tag (keys %articles_by_tag) {
+		my @article_links_by_tag;
+		push @article_links_by_tag, {
+			heading => "Tagged under '$tag'",
+			articles => $articles_by_tag{$tag},
+		};
+
+		my $page_data = {
+			header => create_header_card_data(),
+			footer => create_footer_card_data(),
+			nav => create_nav_card_data(),
+			article_links_by_topic => \@article_links_by_tag,
+			recent_articles => create_recent_articles_card_data(),
+		};
+
+		my $tag_html = process_stock_template_file('tpl_page_articles_toc.html', $page_data);
+		my $tag_filename = 'tag_' . filename_link_from_title($tag);
+		my $outfilename = "$outdir/$tag_filename";
+		print "==> Writing to file '$outfilename'...\n";
+		write_to_file($outfilename, $tag_html);
+	}
+}
