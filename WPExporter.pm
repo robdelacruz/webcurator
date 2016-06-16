@@ -184,6 +184,23 @@ sub replace_image_urls {
 	return $content;
 }
 
+sub replace_shortcodes {
+	my $content = shift;
+
+	# Remove caption shortcode and place extracted caption under image.
+	# Caption shortcode reference: https://codex.wordpress.org/Caption_Shortcode
+	# [caption id="" ...]<img ... /> (Caption goes here) [/caption]
+	$content =~ s/\[caption\s+.*?\]\s*(<img.*?\/>)\s*(.*?)\s*\[\/caption\]/<figure>\1<figcaption>\2<\/figcaption><\/figure>/;
+
+	# Strip out youtube shortcode
+	$content =~ s/\[youtube\s+(\S+)\s+\]/\1/g;
+
+	# Make youtube url a clickable link
+	$content =~ s/(https?:\/\/\S+)/<a href='\1'>\1<\/a>/g;
+
+	return $content;
+}
+
 sub replace_special_chars {
 	my $s = shift;
 
@@ -332,6 +349,7 @@ sub export_single_wpfile {
 		}
 
 		$content = replace_image_urls($content, $output_dir) unless $skipimages;
+		$content = replace_shortcodes($content);
 
 		if (length $title > 0 && length $author > 0 && length $content > 0) {
 			write_post_file($output_dir, $title, $author, $dt, $excerpt,
