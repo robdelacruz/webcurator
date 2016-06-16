@@ -266,7 +266,7 @@ EOT
 }
 
 sub export_single_wpfile {
-	my ($wp_export_filename, $output_dir, $export_info) = @_;
+	my ($wp_export_filename, $output_dir, $skipimages, $export_info) = @_;
 
 	unless (-e $wp_export_filename) {
 		print "Can't open '$wp_export_filename'.\n";
@@ -331,7 +331,8 @@ sub export_single_wpfile {
 			$export_info->{categories}{node_text($category_node)}++;
 		}
 
-		$content = replace_image_urls($content, $output_dir);
+		$content = replace_image_urls($content, $output_dir) unless $skipimages;
+
 		if (length $title > 0 && length $author > 0 && length $content > 0) {
 			write_post_file($output_dir, $title, $author, $dt, $excerpt,
 								$categories, $tags, $content);
@@ -340,7 +341,7 @@ sub export_single_wpfile {
 }
 
 sub export_wp {
-	my ($wp_export_filename, $output_dir) = @_;
+	my ($wp_export_filename, $output_dir, $skipimages) = @_;
 
 	clear_dir($output_dir);
 
@@ -353,12 +354,12 @@ sub export_wp {
 			my $cur_export_file = "$base_part.$seq_part.xml";
 			last unless -e $cur_export_file;
 
-			export_single_wpfile($cur_export_file, $output_dir, \%export_info);
+			export_single_wpfile($cur_export_file, $output_dir, $skipimages, \%export_info);
 		}
 	}
 	else {
 		# Single export file only
-		export_single_wpfile($wp_export_filename, $output_dir, \%export_info);
+		export_single_wpfile($wp_export_filename, $output_dir, $skipimages, \%export_info);
 	}
 
 	my @all_categories = sort {"\L$a" cmp "\L$b"} keys $export_info{categories};

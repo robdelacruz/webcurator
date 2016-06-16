@@ -50,12 +50,12 @@ Ex.
    $0 --imagedir images --conf site.conf *.txt
 
 
-Usage - Generate input text files from exported wordpress xml file and 
-        optionally auto-generate website.
+Usage - Generate input text files from exported wordpress xml file.
+        Optionally: auto-generate website, skip downloading of images.
 
-       ./webc.pl --exportwp <wordpress export file> [--autogen]
+       ./webc.pl --exportwp <wordpress export file> [--autogen] [--skipimages]
 Ex.
-   $0 --exportwp wpsite.wordpress.xml --autogen
+   $0 --exportwp wpsite.wordpress.xml --autogen --skipimages
 
 EOT
 
@@ -67,29 +67,32 @@ EOT
 	# 3. Read config settings from site.conf.
 	# 4. Process all src/*.txt files and generate html into site/ directory.
 	#
-	# ./webc.pl --exportwp wpexport.xml --autogen
+	# ./webc.pl --exportwp wpexport.xml --autogen --skipimages
 	#
 	# 1. Extract posts from wpexport.xml and generate .txt files into output/ directory.
-	# 2. (If --autogen specified) Process output/*.txt files and generate html
+	# 2. (if --autogen specified) Process output/*.txt files and generate html
 	#    into site/ directory.
+	# 3. (if --skipimages specified) Skip downloading of wordpress images.
 	#
 	my $src_imagedir;
 	my $src_assetdir;
 	my $conf_file;
 	my $wpexport_file;
 	my $autogen;
+	my $skipimages;
 	GetOptions(
 		'imagedir=s' => \$src_imagedir,
 		'assetdir=s' => \$src_assetdir,
 		'conf=s'     => \$conf_file,
 		'exportwp=s' => \$wpexport_file,
 		'autogen'    => \$autogen,
+		'skipimages' => \$skipimages,
 	) or die $usage_txt;
 
 	if ($wpexport_file) {
 		# Generate input text files, site.conf, download images  into output/ dir
 		my $output_dir = 'output';
-		WPExporter::export_wp($wpexport_file, $output_dir);
+		WPExporter::export_wp($wpexport_file, $output_dir, $skipimages);
 
 		# Generate website from files generated from export_wp(): 
 		#   output/*.txt, output/images, output/site.conf
