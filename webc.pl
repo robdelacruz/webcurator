@@ -272,33 +272,37 @@ sub fill_in_siteconf_defaults {
 
 # Sort global data structures
 sub sort_article_data {
-	sub by_date {
+	sub by_asc_date {
 		$a->{dt} <=> $b->{dt} || 
 		$a->{title} cmp $b->{title};
 	}
-	sub by_seq_date {
+	sub by_desc_date {
+		$b->{dt} <=> $a->{dt} || 
+		$a->{title} cmp $b->{title};
+	}
+	sub by_seq_desc_date {
 		$a->{seq} <=> $b->{seq} ||
-		$a->{dt} <=> $b->{dt} ||
+		$b->{dt} <=> $a->{dt} ||
 		$a->{title} cmp $b->{title};
 	}
 
-	@all_articles = sort by_date @all_articles;
+	@all_articles = sort by_asc_date @all_articles;
 
 	foreach my $title (keys %articles_by_title) {
 		my $articles_of_title = $articles_by_title{$title};
-		my @sorted_articles = sort by_date @$articles_of_title;
+		my @sorted_articles = sort by_desc_date @$articles_of_title;
 		$articles_by_title{$title} = \@sorted_articles;
 	}
 
 	foreach my $author (keys %articles_by_author) {
 		my $articles_of_author = $articles_by_author{$author};
-		my @sorted_articles = sort by_date @$articles_of_author;
+		my @sorted_articles = sort by_desc_date @$articles_of_author;
 		$articles_by_author{$author} = \@sorted_articles;
 	}
 
 	foreach my $topic (keys %articles_by_topic) {
 		my $articles_of_topic = $articles_by_topic{$topic};
-		my @sorted_articles = sort by_seq_date @$articles_of_topic;
+		my @sorted_articles = sort by_seq_desc_date @$articles_of_topic;
 		$articles_by_topic{$topic} = \@sorted_articles;
 	}
 }
