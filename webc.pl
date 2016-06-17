@@ -523,7 +523,7 @@ sub clear_dir {
 sub write_to_file {
 	my ($outfilename, $content) = @_;
 
-	open my $houtfile, '>', $outfilename
+	open my $houtfile, '>:encoding(UTF-8)', $outfilename
 		or die "Can't write '$outfilename'.";
 	print $houtfile $content;
 	close $houtfile;

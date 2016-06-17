@@ -189,11 +189,13 @@ sub replace_shortcodes {
 
 	# Remove caption shortcode and place extracted caption under image.
 	# Caption shortcode reference: https://codex.wordpress.org/Caption_Shortcode
-	# [caption id="" ...]<img ... /> (Caption goes here) [/caption]
-	$content =~ s/\[caption\s+.*?\]\s*(<img.*?\/>)\s*(.*?)\s*\[\/caption\]/<figure>\1<figcaption>\2<\/figcaption><\/figure>/;
+	# [caption id="" ...]<a href ...><img ... /></a> (Caption goes here) [/caption]
+	$content =~ s/\[caption\s+.*?\]\s*(.+>)\s*(.*?)\s*\[\/caption\]/<figure>\1<figcaption>\2<\/figcaption><\/figure>/;
 
-	# Strip out youtube shortcode and make youtube url a link
-	$content =~ s/\[youtube\s+(\S+)\s+\]/<a href="\1">\1<\/a>/g;
+	# Make youtube urls into links and strip out [youtube] shortcode
+	# [youtube=(url)]
+	$content =~ s/(https?:\/\/youtu\.?be\S+)\s/<a href="\1">\1<\/a>/g;
+	$content =~ s/\[youtube[\s=]\s*(.+?)\s*\]/\1/g;
 
 	return $content;
 }
@@ -225,7 +227,7 @@ sub write_post_file {
 	my $outfilename = "$output_dir/$title_in_filename.txt";
 	print "==> Writing to file '$outfilename'...\n";
 
-	open my $houtfile, '>', $outfilename
+	open my $houtfile, '>:encoding(UTF-8)', $outfilename
 		or die "Can't write '$outfilename'.";
 	print $houtfile "WEBC 1.0\n";
 	print $houtfile "Title: $title\n";
@@ -274,7 +276,7 @@ article_show_topic_link=
 
 EOT
 
-	open my $houtfile, '>', "$output_dir/$conf_filename";
+	open my $houtfile, '>:encoding(UTF-8)', "$output_dir/$conf_filename";
 	print $houtfile $conf_text;
 	close $houtfile;
 }
@@ -377,7 +379,7 @@ sub export_wp {
 		export_single_wpfile($wp_export_filename, $output_dir, $skipimages, \%export_info);
 	}
 
-	my @all_categories = sort {"\L$a" cmp "\L$b"} keys $export_info{categories};
+	my @all_categories = sort {"\L$a" cmp "\L$b"} keys %{$export_info{categories}};
 
 	print "Writing to config file $output_dir/site.conf...\n";
 	generate_config_file($output_dir, 'site.conf',
