@@ -190,7 +190,7 @@ sub replace_shortcodes {
 	# Remove caption shortcode and place extracted caption under image.
 	# Caption shortcode reference: https://codex.wordpress.org/Caption_Shortcode
 	# [caption id="" ...]<a href ...><img ... /></a> (Caption goes here) [/caption]
-	$content =~ s/\[caption\s+.*?\]\s*(.+>)\s*(.*?)\s*\[\/caption\]/<figure>\1<figcaption>\2<\/figcaption><\/figure>/;
+	$content =~ s/\[caption\s+.*?\]\s*(.+>)\s*(.*?)\s*\[\/caption\]/<figure>\1<figcaption>\2<\/figcaption><\/figure>/g;
 
 	# Make youtube urls into links and strip out [youtube] shortcode
 	# [youtube=(url)]
