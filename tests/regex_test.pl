@@ -14,7 +14,13 @@ my $caption2 = <<'EOT';
 EOT
 
 my $youtube = <<'EOT';
+[youtube=https://www.youtube.com/watch?v=4gO8g90z3VU]
+https://www.youtube.com/watch?v=4gO8g90z3VU
+https://youtube.com/watch?v=4gO8g90z3VU
+
 [youtube https://youtu.be/xFVDNTXIC_Y ]
+http://www.youtu.be/xFVDNTXIC_Y
+http://youtu.be/xFVDNTXIC_Y
 EOT
 
 say $caption1;
@@ -26,7 +32,7 @@ $caption1 =~ s/\[caption\s+.*?\]\s*(.+>)\s*(.*?)\s*\[\/caption\]/<figure>\1<figc
 
 $caption2 =~ s/\[caption\s+.*?\]\s*(.+>)\s*(.*?)\s*\[\/caption\]/<figure>\1<figcaption>\2<\/figcaption><\/figure>/g;
 
-$youtube =~ s/(https?:\/\/youtu\.?be\S+)\s/<a href="\1">\1<\/a>/g;
+$youtube =~ s/(https?:\/\/(?:www\.)?youtu\.?be\S+)/<a href="\1">\1<\/a>/g;
 $youtube =~ s/\[youtube[\s=]\s*(.+?)\s*\]/\1/g;
 
 say "caption1 transformed:\n$caption1";
