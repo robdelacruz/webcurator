@@ -194,8 +194,8 @@ sub replace_shortcodes {
 
 	# Make youtube urls into links and strip out [youtube] shortcode
 	# [youtube=(url)]
-	$content =~ s/(https?:\/\/(?:www\.)?youtu\.?be\S+)/<a href="\1">\1<\/a>/g;
-	$content =~ s/\[youtube[\s=]\s*(.+?)\s*\]/\1/g;
+	$content =~ s/^\s*(https?:\/\/(?:www\.)?youtu\.?be\S+)\s*$/\n<a href="\1">\1<\/a>\n/gm;
+	$content =~ s/\[youtube[\s=]\s*(.+?)\s*\]/<a href="\1">\1<\/a>/g;
 
 	return $content;
 }
