@@ -312,7 +312,7 @@ sub is_webc_file {
 	my ($article_filename) = @_;
 
 	my $harticlefile;
-	if (!open $harticlefile, '<', $article_filename) {
+	if (!open $harticlefile, '<:encoding(UTF-8)', $article_filename) {
 		warn "Error opening '$article_filename': $!\n";
 		return 0;
 	}
@@ -424,7 +424,7 @@ sub process_article_file {
 	my ($article_filename) = @_;
 
 	my $harticlefile;
-	if (!open $harticlefile, '<', $article_filename) {
+	if (!open $harticlefile, '<:encoding(UTF-8)', $article_filename) {
 		warn "Error opening '$article_filename': $!\n";
 		return;
 	}
