@@ -2,6 +2,7 @@
 
 use v5.14;
 
+use POSIX qw(strftime);
 use DateTime;
 use DateTime::Format::Strptime;
 use Cwd;
@@ -199,6 +200,14 @@ sub trim {
 	$s =~ s/^\s+|\s+$//g;
 	return $s
 };
+
+sub datetime_of_file {
+	my $file = shift;
+
+	my $epoch_seconds = (stat($file))[9];
+	my $datetime_str = strftime("%Y-%m-%d %H:%M", localtime($epoch_seconds));	
+	return datetime_from_str($datetime_str);
+}
 
 sub datetime_from_str {
 	my ($dt_str) = @_;
@@ -513,8 +522,14 @@ sub process_article_file {
 		} @article_tag_names;
 	}
 
-	if (defined $article_date && defined $article_title && defined $article_author) {
-		my $article_dt = datetime_from_str($article_date);
+	if ($article_title && $article_author) {
+		my $article_dt;
+		if ($article_date) {
+			$article_dt = datetime_from_str($article_date);
+		}
+		else {
+			$article_dt = datetime_of_file($article_filename);
+		}
 		if ($article_dt) {
 			my $article_content;
 			{
@@ -539,7 +554,7 @@ sub process_article_file {
 			print "Skipping $article_filename. Invalid header date: '$article_date'\n";
 		}
 	} else {
-		print "Skipping $article_filename. Date, Author, or Title missing in Header.\n";
+		print "Skipping $article_filename. Author, or Title missing in Header.\n";
 	}
 
 	close $harticlefile;

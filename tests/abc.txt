@@ -1,7 +1,6 @@
 WEBC 1.0
 Title: Web Curator
 Author: web curator
-Date: 1986-01-01 04:00
 Type: thing
 Topic:  
 Tags:  
