@@ -1,0 +1,8 @@
+WEBC 1.0
+Title: "Same Title"
+Author: same title
+Type: thing
+Topic:  
+Tags:  
+
+This is the article with the title "Same Title".
