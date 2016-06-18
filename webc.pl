@@ -43,13 +43,21 @@ sub main {
 
 Usage - Generate website from input text files:
 
-       ./webc.pl [--imagedir <image directory>]
+       ./webc.pl [--sourcedir <source directory>]
+                 [--imagedir <image directory>]
                  [--assetdir <asset directory>]
                  [--conf <config file>]
                  <input files>
 Ex. 
    $0 --imagedir images --conf site.conf *.txt
+   $0 --sourcedir inputdir
 
+   Specifying --sourcedir <inputdir> sets the source directory of
+   all the input files:
+      inputdir/images    (images directory if needed)
+	  inputdir/asset     (asset files directory if needed)
+	  inputdir/site.conf
+	  inputdir/*.txt
 
 Usage - Generate input text files from exported wordpress xml file.
         Optionally: auto-generate website, skip downloading of images.
@@ -62,6 +70,7 @@ EOT
 
 	# Sample command-line:
 	# ./webc.pl --imagedir src/images --assetdir src/assets --conf site.conf src/*.txt
+	# ./webc.pl --sourcedir src   (src/ contains all files and directories)
 	#
 	# 1. Copy src/images into site/images directory.
 	# 2. Copy src/assets into site/assets directory.
@@ -75,6 +84,7 @@ EOT
 	#    into site/ directory.
 	# 3. (if --skipimages specified) Skip downloading of wordpress images.
 	#
+	my $src_sourcedir;
 	my $src_imagedir;
 	my $src_assetdir;
 	my $conf_file;
@@ -82,12 +92,13 @@ EOT
 	my $autogen;
 	my $skipimages;
 	GetOptions(
-		'imagedir=s' => \$src_imagedir,
-		'assetdir=s' => \$src_assetdir,
-		'conf=s'     => \$conf_file,
-		'exportwp=s' => \$wpexport_file,
-		'autogen'    => \$autogen,
-		'skipimages' => \$skipimages,
+		'sourcedir=s' => \$src_sourcedir,
+		'imagedir=s'  => \$src_imagedir,
+		'assetdir=s'  => \$src_assetdir,
+		'conf=s'      => \$conf_file,
+		'exportwp=s'  => \$wpexport_file,
+		'autogen'     => \$autogen,
+		'skipimages'  => \$skipimages,
 	) or die $usage_txt;
 
 	if ($wpexport_file) {
@@ -101,12 +112,26 @@ EOT
 			my @article_files = glob('output/*.txt');
 			generate_site(\@article_files, 'output/site.conf', 'output/images', undef);
 		}
-	} else {
+	}
+	elsif ($src_sourcedir) {
+			unless (-d $src_sourcedir) {
+				print "'$src_sourcedir' doesn't exist.\n";	
+				exit 1;
+			}
+
+			my @inputfiles = glob("$src_sourcedir/*.txt");
+			generate_site(
+				\@inputfiles,
+				"$src_sourcedir/site.conf",
+				"$src_sourcedir/images",
+				"$src_sourcedir/asset"
+			);
+	}
+	else {
 		if (@ARGV == 0) {
 			print $usage_txt;
 			exit 0;
 		}
-
 		generate_site(\@ARGV, $conf_file, $src_imagedir, $src_assetdir);
 	}
 }
