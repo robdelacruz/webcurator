@@ -152,7 +152,7 @@ sub generate_site {
 	# Copy image, assets source directories and any source files needed to output dir.
 	copy_dir($src_imagedir, "$output_dir/images");
 	copy_dir($src_assetdir, "$output_dir/assets");
-	copy_file('style.css', "$output_dir/style.css");
+	copy_src_file('style.css', "$output_dir/style.css");
 
 	# Read settings from site config file
 	if (-e $conf_file) {
@@ -185,8 +185,11 @@ sub generate_site {
 	print "Writing tags html files to $output_dir...\n";
 	write_tags_html_files($output_dir);
 
-	print "Writing index pages to $output_dir...\n";
-	write_index_html_files($output_dir);
+	print "Writing default page to $output_dir...\n";
+	write_default_html_file($output_dir);
+
+	print "Writing index page to $output_dir...\n";
+	write_index_html_file($output_dir);
 }
 
 ###
@@ -241,10 +244,11 @@ sub copy_dir {
 	}
 }
 
-sub copy_file {
+sub copy_src_file {
 	my ($src_file, $target_file) = @_;
 	copy(File::Spec->catpath('', script_dirname(), $src_file), $target_file);
 }
+
 ### End Helper functions
 ###
 
@@ -276,6 +280,9 @@ sub fill_in_siteconf_defaults {
 	}
 	if (!$conf->{site}{archives_page_heading}) {
 		$conf->{site}{archives_page_heading} = 'Archives';
+	}
+	unless ($conf->{site}{home} =~ /^\s*(default|latest|articles|archives)\s*$/) {
+		$conf->{site}{home} = 'default';
 	}
 	
 	# [articles]
@@ -718,8 +725,8 @@ sub create_nav_card_data {
 	];
 }
 
-# Generate archives html file containing links to all articles
-sub write_index_html_files {
+# Generate default html file containing authors list and recent articles
+sub write_default_html_file {
 	my $outdir = shift;
 
 	my $page_data = {
@@ -730,10 +737,30 @@ sub write_index_html_files {
 		recent_articles => create_recent_articles_card_data(),
 	};
 
-	my $page_index_html = process_stock_template_file('tpl_page_index.html', $page_data);
-	my $outfilename = "$outdir/index.html";
+	my $page_index_html = process_stock_template_file('tpl_page_default.html', $page_data);
+	my $outfilename = "$outdir/default.html";
 	print "==> Writing to file '$outfilename'...\n";
 	write_to_file($outfilename, $page_index_html);
+}
+
+sub write_index_html_file {
+	my $outdir = shift;
+
+	my $index_file = "$outdir/index.html";
+
+	if ($siteconf->{site}{home} eq 'latest') {
+		my $article = $all_articles[-1];
+		copy("$outdir/$article->{article_link}", $index_file);
+	}
+	elsif ($siteconf->{site}{home} eq 'articles') {
+		copy("$outdir/articles.html", $index_file);
+	}
+	elsif ($siteconf->{site}{home} eq 'archives') {
+		copy("$outdir/archives.html", $index_file);
+	}
+	else {
+		copy("$outdir/default.html", $index_file);
+	}
 }
 
 # Generate articles table of contents html file

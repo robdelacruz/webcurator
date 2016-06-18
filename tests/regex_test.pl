@@ -2,7 +2,6 @@
 
 use v5.14;
 
-
 my $caption1 = <<'EOT';
 [caption id="attachment_3411" align="aligncenter" width="300"]<a href="https://3rdworldgeeks.files.wordpress.com/2014/11/dc-movie-timeline.png" rel="attachment wp-att-3411"><img class="size-medium wp-image-3411" src="https://3rdworldgeeks.files.wordpress.com/2014/11/dc-movie-timeline.png?w=300" alt="That's a long time!" width="300" height="284" /></a> Up to 2020? Wow! That's a lot of planning![/caption]
 EOT
@@ -14,9 +13,9 @@ my $caption2 = <<'EOT';
 EOT
 
 my $youtube = <<'EOT';
-[youtube=https://www.youtube.com/watch?v=4gO8g90z3VU]
-https://www.youtube.com/watch?v=4gO8g90z3VU
-https://youtube.com/watch?v=4gO8g90z3VU
+[youtube=https://www.youtube.com/watch?v=4gO8g90z3VU]
+https://www.youtube.com/watch?v=4gO8g90z3VU
+https://youtube.com/watch?v=4gO8g90z3VU
 
 [youtube https://youtu.be/xFVDNTXIC_Y ]
 http://www.youtu.be/xFVDNTXIC_Y
@@ -39,3 +38,6 @@ say "caption1 transformed:\n$caption1";
 say "caption2 transformed:\n$caption2";
 say "youtube transformed:\n$youtube";
 
+my $home = "latest";
+my ($match) = $home =~ /^\s*(default|latest|articles)\s*$/;
+say "match: '$match'";

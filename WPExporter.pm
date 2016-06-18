@@ -267,6 +267,7 @@ site_footer=
 site_footer_aside=
 articles_page_heading=Articles Contents
 archives_page_heading=Archives
+home=default
 
 [articles]
 topic_order=$categories_csv
