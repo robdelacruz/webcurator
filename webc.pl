@@ -637,14 +637,12 @@ sub create_article_links_by_year_data {
 sub write_archives_html_file {
 	my $outdir = shift;
 
-	my @all_articles_desc = sort by_desc_date @all_articles;
-
 	my $page_data = {
 		header => create_header_card_data(),
 		footer => create_footer_card_data(),
 		page_title => $siteconf->{site}{archives_page_heading},
 		nav => create_nav_card_data(),
-		article_links_by_year => create_article_links_by_year_data(\@all_articles_desc),
+		article_links_by_year => create_article_links_by_year_data([reverse @all_articles]),
 		recent_articles => create_recent_articles_card_data(),
 	};
 
@@ -693,7 +691,8 @@ sub create_author_links_card_data {
 }
 
 sub create_recent_articles_card_data {
-	my $max_recent_articles = 10;
+	my $max_recent_articles = shift // 10;
+
 	my @recent_articles;
 	foreach my $article (reverse @all_articles) {
 		push @recent_articles, $article;
@@ -736,7 +735,7 @@ sub write_default_html_file {
 		footer => create_footer_card_data(),
 		nav => create_nav_card_data(),
 		author_links => create_author_links_card_data(),
-		recent_articles => create_recent_articles_card_data(),
+		recent_articles => create_recent_articles_card_data(50),
 	};
 
 	my $page_index_html = process_stock_template_file('tpl_page_default.html', $page_data);
