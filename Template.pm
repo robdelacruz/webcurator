@@ -1,8 +1,6 @@
 package Template;
 
-use strict;
-use warnings;
-use 5.012;
+use v5.14;
 
 use File::Basename;
 use File::Spec;
