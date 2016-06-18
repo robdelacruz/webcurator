@@ -637,12 +637,14 @@ sub create_article_links_by_year_data {
 sub write_archives_html_file {
 	my $outdir = shift;
 
+	my @all_articles_desc = sort by_desc_date @all_articles;
+
 	my $page_data = {
 		header => create_header_card_data(),
 		footer => create_footer_card_data(),
 		page_title => $siteconf->{site}{archives_page_heading},
 		nav => create_nav_card_data(),
-		article_links_by_year => create_article_links_by_year_data(\@all_articles),
+		article_links_by_year => create_article_links_by_year_data(\@all_articles_desc),
 		recent_articles => create_recent_articles_card_data(),
 	};
 
