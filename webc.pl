@@ -66,6 +66,10 @@ Usage - Generate input text files from exported wordpress xml file.
 Ex.
    $0 --exportwp wpsite.wordpress.xml --autogen --skipimages
 
+Usage - Generate empty website with sample site.conf and article text files.
+
+       ./webc.pl --newsourcedir <source dir>
+
 EOT
 
 	# Sample command-line:
@@ -84,6 +88,10 @@ EOT
 	#    into site/ directory.
 	# 3. (if --skipimages specified) Skip downloading of wordpress images.
 	#
+	# ./webc.pl --newsourcedir source
+	#
+	# 1. Create source/ containing sample site.conf and article files as a starting point.
+	#
 	my $src_sourcedir;
 	my $src_imagedir;
 	my $src_assetdir;
@@ -91,14 +99,16 @@ EOT
 	my $wpexport_file;
 	my $autogen;
 	my $skipimages;
+	my $newsourcedir;
 	GetOptions(
-		'sourcedir=s' => \$src_sourcedir,
-		'imagedir=s'  => \$src_imagedir,
-		'assetdir=s'  => \$src_assetdir,
-		'conf=s'      => \$conf_file,
-		'exportwp=s'  => \$wpexport_file,
-		'autogen'     => \$autogen,
-		'skipimages'  => \$skipimages,
+		'sourcedir=s' 		=> \$src_sourcedir,
+		'imagedir=s'  		=> \$src_imagedir,
+		'assetdir=s'  		=> \$src_assetdir,
+		'conf=s'      		=> \$conf_file,
+		'exportwp=s'  		=> \$wpexport_file,
+		'autogen'     		=> \$autogen,
+		'skipimages'  		=> \$skipimages,
+		'newsourcedir=s'	=> \$newsourcedir,
 	) or die $usage_txt;
 
 	if ($wpexport_file) {
@@ -127,6 +137,9 @@ EOT
 				"$src_sourcedir/asset"
 			);
 	}
+	elsif ($newsourcedir) {
+		generate_skeleton_site($newsourcedir);
+	}
 	else {
 		if (@ARGV == 0) {
 			print $usage_txt;
@@ -134,6 +147,61 @@ EOT
 		}
 		generate_site(\@ARGV, $conf_file, $src_imagedir, $src_assetdir);
 	}
+}
+
+sub generate_skeleton_site {
+	my $newsourcedir = shift;
+
+	clear_dir($newsourcedir);
+	WPExporter::generate_config_file(
+		$newsourcedir,
+		'site.conf',
+		'My Website Title (edit this entry in site.config)',
+		'My Website Description (edit this entry in site.config)',
+		['Topic 1', 'Topic 2', 'Add topics here'],
+	);
+
+	mkdir "$newsourcedir/images";
+	mkdir "$newsourcedir/asset";
+
+	open my $readme_file, '>:encoding(UTF-8)', "$newsourcedir/README.txt"
+		or warn "Can't write readme file $!";
+	print $readme_file <<"EOT";
+1. Edit settings in site.conf
+
+2. Edit article text file 'article1.txt'.
+
+3. Add new article text files following the format of the sample article1.txt file.
+
+4. Run the following command to generate the website html files:
+
+      ./webc.pl --sourcedir <source dir>
+
+   where <source dir> refers to the directory containing site.conf and article files.
+
+5. View site/index.html in the browser to go to the start page.
+
+EOT
+	close $readme_file;
+
+	open my $article_file, '>:encoding(UTF-8)', "$newsourcedir/article1.txt"
+		or warn "Can't write to article file $!";
+	print $article_file <<"EOT";
+WEBC 1.0
+Title: Sample Article Title
+Date: 2016-01-01
+Author: sample author
+Type: article
+Format: markdown
+Topic: Topic 1, Topic 2
+Tags: Tag 1, Tag 2
+
+This is a sample article.
+
+You can use [markdown formatting](https://daringfireball.net/projects/markdown/basics) to format the article text.
+
+EOT
+	close $article_file;
 }
 
 sub generate_site {
