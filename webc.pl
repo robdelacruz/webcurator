@@ -1,5 +1,4 @@
-#!/usr/bin/perl
-
+#!/usr/bin/perl 
 use v5.14;
 
 use POSIX qw(strftime);
@@ -10,7 +9,7 @@ use Text::Markdown qw(markdown);
 use File::Basename;
 use File::Spec;
 use File::Path;
-use File::Copy qw(copy);
+use File::Copy qw(copy move);
 use File::Copy::Recursive qw(dircopy);
 use Getopt::Long qw(GetOptions);
 use Config::Tiny;
@@ -560,9 +559,14 @@ sub process_article_file {
 	close $harticlefile;
 }
 
+# Backup then clear directory
 sub clear_dir {
 	my $dir = shift;
 
+	if (-d $dir) {
+		rmtree "$dir.bak";
+		move($dir, "$dir.bak");
+	}
 	rmtree $dir;
 	mkdir $dir;
 }

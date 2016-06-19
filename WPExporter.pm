@@ -4,6 +4,7 @@ use v5.14;
 
 use XML::Tiny;
 use File::Path;
+use File::Copy qw(copy move);
 
 use HTTP::Tiny;
 my $tiny = HTTP::Tiny->new();
@@ -135,9 +136,14 @@ sub csv_text_from_nodes {
 	my $categories = join(', ', @categories_texts);
 }
 
+# Backup then clear directory
 sub clear_dir {
 	my $dir = shift;
 
+	if (-d $dir) {
+		rmtree "$dir.bak";
+		move($dir, "$dir.bak");
+	}
 	rmtree $dir;
 	mkdir $dir;
 }
