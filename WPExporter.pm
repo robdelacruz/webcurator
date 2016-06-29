@@ -5,6 +5,7 @@ use v5.14;
 use XML::Tiny;
 use File::Path;
 use File::Copy qw(copy move);
+use Encode qw(decode_utf8);
 
 use HTTP::Tiny;
 my $tiny = HTTP::Tiny->new();
@@ -354,6 +355,7 @@ sub export_single_wpfile {
 			$export_info->{categories}{node_text($category_node)}++;
 		}
 
+		$content = decode_utf8($content);	# Fix for 'Â' char showing up	
 		$content = replace_image_urls($content, $output_dir) unless $skipimages;
 		$content = replace_shortcodes($content);
 
