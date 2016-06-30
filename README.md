@@ -30,7 +30,7 @@ Run `webc` on the shell to verify that the alias you set up in *step 3* is worki
 
 ## Generate a static website from input text files.
 
-1. Run the following command to initialize a new source directory:
+  1. Run the following command to initialize a new source directory:
 
 ```
 webc --newsourcedir <target directory>
@@ -40,7 +40,7 @@ Ex. webc --newsourcedir robs_website
 
 This will create a new directory that contains sample input files containing the basic format of an article page, as well as a default *site.conf* configuration file.
 
-2. In the target directory you specified from the previous step, you'll find the sample input file `article1.txt` which contains the basic format of an input file. Each input file corresponds to a web page that will appear in the target website. You can think of the input file as containing a single text article or blog post that will show up in the completed website.
+  2. In the target directory you specified from the previous step, you'll find the sample input file `article1.txt` which contains the basic format of an input file. Each input file corresponds to a web page that will appear in the target website. You can think of the input file as containing a single text article or blog post that will show up in the completed website.
 
 Sample input file:
 
@@ -71,7 +71,7 @@ To add another web page, just create a new text input file. The *webc* utility w
 
 You can also configure the website settings that control various properties in the `site.conf` file. I'll document these fields in a future update but feel free to experiment with the settings.
 
-3. Generate the static website based on the current set of input files
+  3. Generate the static website based on the current set of input files
 
 When you're done editing input files and want to create a static website representation of it, run the following:
 
@@ -105,11 +105,11 @@ You can edit these html files directly if you want but remember that they will b
 
 `webc` can also take a an exported wordpress xml file as input and translate the existing wordpress posts into input text files. Or if you prefer, you can convert the exported wordpress xml file into a website in one step. Here's how to do it:
 
-1. Export Wordpress blog into XML
+  1. Export Wordpress blog into XML
 
 If you're using a hosted wordpress.com account, you can export your blog by logging into wordpress.com and navigating to `https://<your blog id>/wp-admin/export.php?type=export`, and select *Download Export File* to download the wordpress xml file that contains all your content.
 
-2. Translate exported xml file into a static website
+  2. Translate exported xml file into a static website
 
 Once you have the exported wordpress xml file, you can convert it directly to a static website in one step:
 
