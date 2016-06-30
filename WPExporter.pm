@@ -346,8 +346,8 @@ sub export_single_wpfile {
 		my $title = node_text($title_node);
 		my $author = node_text($creator_node);
 		my $dt = node_text($postdate_node);
-		my $excerpt = node_text($excerpt_node);
-		my $content = node_text($content_node);
+		my $excerpt = decode_utf8(node_text($excerpt_node));	# :encoded nodes need to be utf8 decoded
+		my $content = decode_utf8(node_text($content_node));
 		my $categories = csv_text_from_nodes(\@category_nodes);
 		my $tags = csv_text_from_nodes(\@tag_nodes);
 
@@ -355,7 +355,6 @@ sub export_single_wpfile {
 			$export_info->{categories}{node_text($category_node)}++;
 		}
 
-		$content = decode_utf8($content);	# Fix for 'Â' char showing up	
 		$content = replace_image_urls($content, $output_dir) unless $skipimages;
 		$content = replace_shortcodes($content);
 
