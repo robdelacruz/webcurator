@@ -10,6 +10,8 @@ Web Curator can be used to:
 - Maintain a static website. Write web pages as plain text and run a utility to generate html and css files to be uploaded to your web host.
 - Take an exported Wordpress site and convert it to a static website.
 
+A [sample website](https://dl.dropboxusercontent.com/u/27739534/webtest/somecommentary/articles.html) generated using *Web Curator*.
+
 ## Issues
 
 Here's the [list](https://github.com/robdelacruz/webcurator/issues) of pending bugs and todo items.
@@ -38,7 +40,7 @@ Ex. webc --newsourcedir robs_website
 
 This will create a new directory that contains sample input files containing the basic format of an article page, as well as a default *site.conf* configuration file.
 
-2. Change dir to the <target directory> you specified in *step 1*. You'll find the sample input file `article1.txt` which contains the basic format of an input file. Each input file corresponds to a web page that will appear in the target website. You can think of the input file as containing a single text article or blog post that will show up in the completed website.
+2. In the target directory you specified from the previous step, you'll find the sample input file `article1.txt` which contains the basic format of an input file. Each input file corresponds to a web page that will appear in the target website. You can think of the input file as containing a single text article or blog post that will show up in the completed website.
 
 Sample input file:
 
